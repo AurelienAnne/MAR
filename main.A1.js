@@ -224,8 +224,8 @@ function start()
 		carRotationZ.rotation.z = vehicle.angles.z-Math.PI/2.0 ;
 		// Camera
 		switchCamera(NAV, renderingEnvironment.camera, vehicle);
-		
-		console.log(vehicle.speed.z) ;
+		editInfos(NAV, vehicle);
+
 //		renderingEnvironment.camera.rotation.z = vehicle.angles.z-Math.PI/2.0 ;
 		// Rendering
 		renderingEnvironment.renderer.render(renderingEnvironment.scene, renderingEnvironment.camera); 
@@ -234,6 +234,30 @@ function start()
 	render(); 
 }
 
+// Infos d'affichage
+var nbTour = 0;
+var lastPlane = "1";
+var time = 0;
+var checkpoint15 = false;
+resetCheckpoints();
+
+function editInfos(NAV, vehicle) {
+	if(NAV.active == "15") {
+		checkpoint15 = true;
+	}
+	if (lastPlane == "0" && NAV.active == "1" && checkpoint15) {
+		nbTour++;
+		checkpoint15 = false;
+	}
+	document.getElementById("infos").innerHTML = 
+		  "Tour : " + nbTour + "<br>" 
+		+ "Temps : " + (time / 60).toFixed(3); /*+ "<br>"
+		+ "Vitesse : " + Math.max(vehicle.speed.x, vehicle.speed.y, vehicle.speed.z).toFixed(0);*/
+	time++;
+	lastPlane = NAV.active;
+}
+
+// Caméra
 function switchCamera(NAV, camera, vehicle){
 	
 	if(!embarque){
