@@ -18,6 +18,7 @@ requirejs(['ModulesLoaderV2.js'], function()
 ) ;
 
 var embarque;
+var startRaceTime = undefined;
 
 function start()
 {
@@ -187,10 +188,16 @@ function start()
 		if (currentlyPressedKeys[90]) // (Z) Up
 		{
 			vehicle.goFront(1200, 1200) ;
+			if(startRaceTime == undefined) {
+				startRaceTime = moment();
+			}
 		}
 		if (currentlyPressedKeys[83]) // (S) Down 
 		{
 			vehicle.brake(100) ;
+		}
+		if(currentlyPressedKeys[72]) { // (H) Hack 
+			nextLap(NAV);
 		}
 	}
 
@@ -239,29 +246,53 @@ function start()
 // Infos d'affichage
 var nbTour = 0;
 var lastPlane = "1";
-var time = 0;
+var laps = [];
 var checkpoint15 = false;
-resetCheckpoints();
 
 function editInfos(NAV, vehicle) {
 	if(NAV.active == "15") {
 		checkpoint15 = true;
 	}
 	if (lastPlane == "0" && NAV.active == "1" && checkpoint15) {
+		laps.push(moment());
 		nbTour++;
 		checkpoint15 = false;
 	}
+
 	document.getElementById("infos").innerHTML = 
-		  "Tour : " + nbTour + "<br>" 
-		+ "Temps : " + (time / 60).toFixed(3); /*+ "<br>"
-		+ "Vitesse : " + Math.max(vehicle.speed.x, vehicle.speed.y, vehicle.speed.z).toFixed(0);*/
-	time++;
+		"Vitesse : " + Math.max(vehicle.speed.x, vehicle.speed.y, vehicle.speed.z).toFixed(0) + "<br>"
+		+ "Tour : " + (nbTour+1) + "<br>" 
+		+ "Temps total : " + moment(moment().diff(startRaceTime)).format("m:ss.SSS") + "<br>" + showLaps();
+
 	lastPlane = NAV.active;
+}
+
+function showLaps() {
+	var html = "";
+	for(let i = 0; i < laps.length; i++) {
+		var ref;
+		if (i == 0) {
+			ref = startRaceTime;
+		}
+		else {
+			ref = laps[i-1];
+		}
+		html += "> Tour " + (i+1) + " : " + moment(laps[i].diff(ref)).format("m:ss.SSS") + "<br>";
+	}
+	return html;
+}
+
+// Cheat mode
+function nextLap(NAV) {
+	checkpoint15 = true;
+	NAV.active = "29";
+	NAV.x = -221.1913160491978;
+	NAV.y = -89.90764169051636
+	NAV.z = 3.30254723017212;
 }
 
 // Caméra
 function switchCamera(NAV, camera, vehicle){
-	
 	if(!embarque){
 		switch(NAV.active) {
 			case "0":
