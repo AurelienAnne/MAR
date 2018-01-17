@@ -140,7 +140,9 @@ function start()
 	window.addEventListener( 'resize', onWindowResize, false );
 	//	keyboard callbacks 
 	document.onkeydown = handleKeyDown;
-	document.onkeyup = handleKeyUp;					
+	document.onkeyup = handleKeyUp;
+	
+	
 
 	//	callback functions
 	//	---------------------------------------------------------------------------
@@ -231,7 +233,7 @@ function start()
 		renderingEnvironment.renderer.render(renderingEnvironment.scene, renderingEnvironment.camera); 
 	};
 
-	render(); 
+	render();
 }
 
 // Infos d'affichage
