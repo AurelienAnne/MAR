@@ -11,7 +11,8 @@ requirejs(['ModulesLoaderV2.js'], function()
 			                              "myJS/ThreeLightingEnv.js", 
 			                              "myJS/ThreeLoadingEnv.js", 
 			                              "myJS/navZ.js",
-			                              "FlyingVehicle.js"]) ;
+										  "FlyingVehicle.js",
+											"Vehicule.js"]) ;
 			// Loads modules contained in includes and starts main function
 			ModulesLoader.loadModules(start) ;
 		}
@@ -19,7 +20,8 @@ requirejs(['ModulesLoaderV2.js'], function()
 
 var embarque;
 var startRaceTime = undefined;
-var AIvehicle;
+var playerCar;
+var AIcar;
 document.getElementById("audioMusic").volume = 0.3;
 document.getElementById("audioStarship").volume = 0.0;
 
@@ -36,35 +38,6 @@ function start()
 	//	keyPressed
 	var currentlyPressedKeys = {};
 	
-	// car Position
-	var CARx = -220; 
-	var CARy = 0 ; 
-	var CARz = 0 ;
-	var CARtheta = 0 ; 
-
-	// Creates the vehicle (handled by physics)
-	var vehicle = new FlyingVehicle(
-			{
-				position: new THREE.Vector3(CARx, CARy, CARz),
-				zAngle : CARtheta+Math.PI/2.0,
-			}
-			) ;
-
-	
-
-	// ai Position
-	var AIx = -220; 
-	var AIy = 50 ; 
-	var AIz = 0 ;
-	var AItheta = 0 ; 
-	// Create AI vehicule
-	AIvehicle = new FlyingVehicle(
-		{
-			position: new THREE.Vector3(AIx, AIy, AIz),
-			zAngle : CARtheta+Math.PI/2.0,
-		}
-		) ;
-
 	//	rendering env
 	var renderingEnvironment =  new ThreeRenderingEnv();
 
@@ -74,6 +47,10 @@ function start()
 	//	Loading env
 	var Loader = new ThreeLoadingEnv();
 
+	playerCar = new Vehicule(-220,0,0,0,"PlayerCar", Loader, renderingEnvironment);
+	AIcar = new Vehicule(-220,-50,0,0,"AIcar", Loader, renderingEnvironment);
+
+
 	//	Meshes
 	Loader.loadMesh('assets','border_Zup_02','obj',	renderingEnvironment.scene,'border',	-340,-340,0,'front');
 	Loader.loadMesh('assets','ground_Zup_03','obj',	renderingEnvironment.scene,'ground',	-340,-340,0,'front');
@@ -81,59 +58,13 @@ function start()
 	//Loader.loadMesh('assets','tree_Zup_02','obj',	renderingEnvironment.scene,'trees',	-340,-340,0,'double');
 	Loader.loadMesh('assets','arrivee_Zup_01','obj',	renderingEnvironment.scene,'decors',	-340,-340,0,'front');
 		
-	//	Car
-	// car Translation
-	var carPosition = new THREE.Object3D(); 
-	carPosition.name = 'car0'; 
-	renderingEnvironment.addToScene(carPosition); 
-	// initial POS
-	carPosition.position.x = CARx;
-	carPosition.position.y = CARy;
-	carPosition.position.z = CARz;
-	// car Rotation floor slope follow
-	var carFloorSlope = new THREE.Object3D(); 
-	carFloorSlope.name = 'car1';
-	carPosition.add(carFloorSlope);
-	// car vertical rotation
-	var carRotationZ = new THREE.Object3D(); 
-	carRotationZ.name = 'car2';
-	carFloorSlope.add(carRotationZ);
-	carRotationZ.rotation.z = CARtheta ;
-	// the car itself 
-	// simple method to load an object
-	var carGeometry = Loader.load({filename: 'assets/car_Zup_01.obj', node: carRotationZ, name: 'car3'}) ;
-	carGeometry.position.z= +0.25 ;
 	// attach the scene camera to car
-	carGeometry.add(renderingEnvironment.camera) ;
+	playerCar.carGeometry.add(renderingEnvironment.camera) ;
 	renderingEnvironment.camera.position.x = 0.0 ;
 	renderingEnvironment.camera.position.z = 5.0 ;
 	renderingEnvironment.camera.position.y = 0.0 ;
 	renderingEnvironment.camera.rotation.x = 85.0*3.14159/180.0 ;
 	embarque = true;
-		
-
-	//	AICar
-	// car Translation
-	var aiPosition = new THREE.Object3D();
-	aiPosition.name = 'AIcar1';
-	renderingEnvironment.addToScene(aiPosition); 
-	// initial POS
-	aiPosition.position.x = AIx;
-	aiPosition.position.y = AIy;
-	aiPosition.position.z = AIz;
-	// car Rotation floor slope follow
-	var aiFloorSlope = new THREE.Object3D(); 
-	aiFloorSlope.name = 'AIcar1';
-	aiPosition.add(aiFloorSlope);
-	// car vertical rotation
-	var aiRotationZ = new THREE.Object3D(); 
-	aiRotationZ.name = 'AIcar2';
-	aiFloorSlope.add(aiRotationZ);
-	aiRotationZ.rotation.z = AItheta ;
-	// the car itself 
-	// simple method to load an object
-	var aiGeometry = Loader.load({filename: 'assets/car_Zup_01.obj', node: aiRotationZ, name: 'AIcar3'}) ;
-	aiGeometry.position.z= +0.25 ;
 
 	//	Skybox
 	Loader.loadSkyBox('assets/maps',['px','nx','py','ny','pz','nz'],'jpg', renderingEnvironment.scene, 'sky',4000);
@@ -171,7 +102,7 @@ function start()
 	NAV.addPlane(	new navPlane('p28', -240, -220, -240,-200,	+40,+40,'px')); 	// 28	
 	NAV.addPlane(	new navPlane('p29', -240, -180, -200,-140,	+20,+40,'ny')); 	// 29	
 	NAV.addPlane(	new navPlane('p30', -240, -180, -140, -80,	+0,+20,'ny')); 		// 30			
-	NAV.setPos(CARx,CARy,CARz); 
+	NAV.setPos(playerCar.CARx,playerCar.CARy,playerCar.CARz); 
 	NAV.initActive();
 	// DEBUG
 	//NAV.debug();
@@ -195,11 +126,11 @@ function start()
 		{
 			if(embarque){
 				embarque = false;
-				carGeometry.remove(renderingEnvironment.camera);
-				switchCamera(NAV, renderingEnvironment.camera, vehicle);
+				playerCar.carGeometry.remove(renderingEnvironment.camera);
+				switchCamera(NAV, renderingEnvironment.camera, playerCar.vehicle);
 			}else{
 				embarque = true;
-				carGeometry.add(renderingEnvironment.camera) ;
+				playerCar.carGeometry.add(renderingEnvironment.camera) ;
 				renderingEnvironment.camera.position.x = 0.0 ;
 				renderingEnvironment.camera.position.z = 5.0 ;
 				renderingEnvironment.camera.position.y = 0.0 ;
@@ -221,22 +152,22 @@ function start()
 		}				
 		if (currentlyPressedKeys[68]) // (D) Right
 		{
-			vehicle.turnRight(1000) ;
+			playerCar.vehicle.turnRight(1000) ;
 		}
 		if (currentlyPressedKeys[81]) // (Q) Left 
 		{		
-			vehicle.turnLeft(1000) ;
+			playerCar.vehicle.turnLeft(1000) ;
 		}
 		if (currentlyPressedKeys[90]) // (Z) Up
 		{
-			vehicle.goFront(1200, 1200) ;
+			playerCar.vehicle.goFront(1200, 1200) ;
 			if(startRaceTime == undefined) {
 				startRaceTime = moment();
 			}
 		}
 		if (currentlyPressedKeys[83]) // (S) Down 
 		{
-			vehicle.brake(100) ;
+			playerCar.vehicle.brake(100) ;
 		}
 		if(currentlyPressedKeys[72]) { // (H) Hack 
 			nextLap(NAV);
@@ -249,38 +180,48 @@ function start()
 		renderingEnvironment.onWindowResize(window.innerWidth,window.innerHeight);
 	}
 
-	function render() { 
+	function render() {
 		requestAnimationFrame( render );
 		handleKeys();
-		// Vehicle stabilization 
-		vehicle.goUp(vehicle.weight()/4.0, vehicle.weight()/4.0, vehicle.weight()/4.0, vehicle.weight()/4.0) ;
-		vehicle.stopAngularSpeedsXY() ;
-		vehicle.stabilizeSkid(50) ; 
-		vehicle.stabilizeTurn(1000) ;
-		var oldPosition = vehicle.position.clone() ;
-		vehicle.update(1.0/60) ;
-		var newPosition = vehicle.position.clone() ;
-		newPosition.sub(oldPosition) ;
-		// NAV
-		NAV.move(newPosition.x, newPosition.y, 150,10) ;
-		// carPosition
-		carPosition.position.set(NAV.x, NAV.y, NAV.z) ;
-		// Updates the vehicle
-		vehicle.position.x = NAV.x ;
-		vehicle.position.y = NAV.Y ;
-		// Updates carFloorSlope
-		carFloorSlope.matrixAutoUpdate = false;		
-		carFloorSlope.matrix.copy(NAV.localMatrix(CARx,CARy));
-		// Updates carRotationZ
-		carRotationZ.rotation.z = vehicle.angles.z-Math.PI/2.0 ;
-		//renderAIvehicule();
+		
+		renderVehicule(playerCar, true);
+		renderVehicule(AIcar, false);
 		// Camera
-		switchCamera(NAV, renderingEnvironment.camera, vehicle);
-		editInfos(NAV, vehicle);
+		switchCamera(NAV, renderingEnvironment.camera, playerCar.vehicle);
+		editInfos(NAV, playerCar.vehicle);
 
 //		renderingEnvironment.camera.rotation.z = vehicle.angles.z-Math.PI/2.0 ;
 		// Rendering
 		renderingEnvironment.renderer.render(renderingEnvironment.scene, renderingEnvironment.camera); 
+	
+		function renderVehicule(v, isPlayerCar){
+			// Vehicle stabilization 
+			v.vehicle.goUp(v.vehicle.weight()/4.0, v.vehicle.weight()/4.0, v.vehicle.weight()/4.0, v.vehicle.weight()/4.0) ;
+			v.vehicle.stopAngularSpeedsXY() ;
+			v.vehicle.stabilizeSkid(50) ; 
+			v.vehicle.stabilizeTurn(1000) ;
+			var oldPosition = v.vehicle.position.clone() ;
+			v.vehicle.update(1.0/60) ;
+			var newPosition = v.vehicle.position.clone() ;
+			newPosition.sub(oldPosition) ;
+
+			if(isPlayerCar){
+				// NAV
+				NAV.move(newPosition.x, newPosition.y, 150,10) ;
+				// carPosition
+				v.carPosition.position.set(NAV.x, NAV.y, NAV.z) ;
+				// Updates the vehicle
+				v.vehicle.position.x = NAV.x ;
+				v.vehicle.position.y = NAV.Y ;
+				// Updates carFloorSlope
+				v.carFloorSlope.matrixAutoUpdate = false;		
+				v.carFloorSlope.matrix.copy(NAV.localMatrix(v.CARx, v.CARy));
+			}			
+			
+			// Updates carRotationZ
+			v.carRotationZ.rotation.z = v.vehicle.angles.z-Math.PI/2.0 ;
+			//renderAIvehicule();
+		}
 	};
 
 	render();
@@ -294,15 +235,16 @@ var ghostEnabled = false;
 
 function renderAIvehicule() {
 	if(ghostEnabled && ghosts[ghostCurrentFrame] != undefined) {
-		AIvehicle.goUp(AIvehicle.weight()/4.0, AIvehicle.weight()/4.0, AIvehicle.weight()/4.0, AIvehicle.weight()/4.0) ;
-		AIvehicle.stopAngularSpeedsXY() ;
-		AIvehicle.stabilizeSkid(50) ; 
-		AIvehicle.stabilizeTurn(1000) ;
-		AIvehicle.update(1.0/60) ;
+		var aiCarVehicule = AIcar.vehicle;
+		aiCarVehicule.goUp(aiCarVehicule.weight()/4.0, aiCarVehicule.weight()/4.0, aiCarVehicule.weight()/4.0, aiCarVehicule.weight()/4.0) ;
+		aiCarVehicule.stopAngularSpeedsXY() ;
+		aiCarVehicule.stabilizeSkid(50) ; 
+		aiCarVehicule.stabilizeTurn(1000) ;
+		aiCarVehicule.update(1.0/60) ;
 
-		AIvehicle.position.x = ghosts[ghostCurrentFrame].x
-		AIvehicle.position.y = ghosts[ghostCurrentFrame].y;
-		AIvehicle.position.z = ghosts[ghostCurrentFrame].z;
+		aiCarVehicule.position.x = ghosts[ghostCurrentFrame].x
+		aiCarVehicule.position.y = ghosts[ghostCurrentFrame].y;
+		aiCarVehicule.position.z = ghosts[ghostCurrentFrame].z;
 	}
 	
 }
