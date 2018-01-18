@@ -45,7 +45,22 @@ function start()
 				zAngle : CARtheta+Math.PI/2.0,
 			}
 			) ;
+
 	
+
+	// ai Position
+	var AIx = -220; 
+	var AIy = 50 ; 
+	var AIz = 0 ;
+	var AItheta = 0 ; 
+	// Create AI vehicule
+	var AIvehicle = new FlyingVehicle(
+		{
+			position: new THREE.Vector3(AIx, AIy, AIz),
+			zAngle : CARtheta+Math.PI/2.0,
+		}
+		) ;
+
 	//	rendering env
 	var renderingEnvironment =  new ThreeRenderingEnv();
 
@@ -92,6 +107,30 @@ function start()
 	renderingEnvironment.camera.rotation.x = 85.0*3.14159/180.0 ;
 	embarque = true;
 		
+
+	//	AICar
+	// car Translation
+	var aiPosition = new THREE.Object3D();
+	aiPosition.name = 'AIcar1';
+	renderingEnvironment.addToScene(aiPosition); 
+	// initial POS
+	aiPosition.position.x = AIx;
+	aiPosition.position.y = AIy;
+	aiPosition.position.z = AIz;
+	// car Rotation floor slope follow
+	var aiFloorSlope = new THREE.Object3D(); 
+	aiFloorSlope.name = 'AIcar1';
+	aiPosition.add(aiFloorSlope);
+	// car vertical rotation
+	var aiRotationZ = new THREE.Object3D(); 
+	aiRotationZ.name = 'AIcar2';
+	aiFloorSlope.add(aiRotationZ);
+	aiRotationZ.rotation.z = AItheta ;
+	// the car itself 
+	// simple method to load an object
+	var aiGeometry = Loader.load({filename: 'assets/car_Zup_01.obj', node: aiRotationZ, name: 'AIcar3'}) ;
+	aiGeometry.position.z= +0.25 ;
+
 	//	Skybox
 	Loader.loadSkyBox('assets/maps',['px','nx','py','ny','pz','nz'],'jpg', renderingEnvironment.scene, 'sky',4000);
 
@@ -224,6 +263,7 @@ function start()
 		carFloorSlope.matrix.copy(NAV.localMatrix(CARx,CARy));
 		// Updates carRotationZ
 		carRotationZ.rotation.z = vehicle.angles.z-Math.PI/2.0 ;
+		renderAIvehicule();
 		// Camera
 		switchCamera(NAV, renderingEnvironment.camera, vehicle);
 		editInfos(NAV, vehicle);
@@ -236,14 +276,17 @@ function start()
 	render();
 }
 
+
+
 // Infos d'affichage
 var nbTour = 0;
 var lastPlane = "1";
 var time = 0;
 var checkpoint15 = false;
-resetCheckpoints();
+//resetCheckpoints();
 
 function editInfos(NAV, vehicle) {
+	document.getElementById('infos').style = 'position: absolute; margin-top: 10px;margin-left: 10px; font-family: Arial; color: white;background-color:rgba(128, 128, 128, .7);padding:4px;';
 	if(NAV.active == "15") {
 		checkpoint15 = true;
 	}
@@ -253,7 +296,8 @@ function editInfos(NAV, vehicle) {
 	}
 	document.getElementById("infos").innerHTML = 
 		  "Tour : " + nbTour + "<br>" 
-		+ "Temps : " + (time / 60).toFixed(3); /*+ "<br>"
+		+ "Temps : " + (time / 60).toFixed(3) + "<br>"
+		+ "<label for=\"camera\">Changer camera</label><input type='text' enable=false value='P' size=2>"; /*+ "<br>"
 		+ "Vitesse : " + Math.max(vehicle.speed.x, vehicle.speed.y, vehicle.speed.z).toFixed(0);*/
 	time++;
 	lastPlane = NAV.active;
