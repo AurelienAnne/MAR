@@ -19,6 +19,7 @@ requirejs(['ModulesLoaderV2.js'], function()
 
 var embarque;
 var startRaceTime = undefined;
+var AIvehicle;
 document.getElementById("audioMusic").volume = 0.3;
 document.getElementById("audioStarship").volume = 0.0;
 
@@ -57,7 +58,7 @@ function start()
 	var AIz = 0 ;
 	var AItheta = 0 ; 
 	// Create AI vehicule
-	var AIvehicle = new FlyingVehicle(
+	AIvehicle = new FlyingVehicle(
 		{
 			position: new THREE.Vector3(AIx, AIy, AIz),
 			zAngle : CARtheta+Math.PI/2.0,
@@ -286,7 +287,25 @@ function start()
 }
 
 // Fantôme
+// TODO : Garder le meilleur tour du ghost, à recalculer que lorsqu'il a fini son tour
 var ghosts = [];
+var ghostCurrentFrame = 0;
+var ghostEnabled = false;
+
+function renderAIvehicule() {
+	if(ghostEnabled && ghosts[ghostCurrentFrame] != undefined) {
+		AIvehicle.goUp(AIvehicle.weight()/4.0, AIvehicle.weight()/4.0, AIvehicle.weight()/4.0, AIvehicle.weight()/4.0) ;
+		AIvehicle.stopAngularSpeedsXY() ;
+		AIvehicle.stabilizeSkid(50) ; 
+		AIvehicle.stabilizeTurn(1000) ;
+		AIvehicle.update(1.0/60) ;
+
+		AIvehicle.position.x = ghosts[ghostCurrentFrame].x
+		AIvehicle.position.y = ghosts[ghostCurrentFrame].y;
+		AIvehicle.position.z = ghosts[ghostCurrentFrame].z;
+	}
+	
+}
 
 // Gestion des tours
 var nbTour = 0;
@@ -303,7 +322,7 @@ function editInfos(NAV, vehicle) {
 		laps.push(moment());
 		nbTour++;
 		checkpoint15 = false;
-		ghosts = [];
+		ghostEnabled = true;
 	}
 
 	document.getElementById("infos").innerHTML = "Vitesse : " + getVehiculeSpeed(vehicle) + "<br>"
@@ -312,7 +331,9 @@ function editInfos(NAV, vehicle) {
 		+ showLaps() 
 		+ "<label for=\"camera\">Changer camera</label><input type='text' enable=false value='P' size=2>";
 
-	saveGhostPosition(NAV);
+	saveGhostPosition(NAV);	
+	renderAIvehicule();
+	
 
 	const vehiculeVolume = getVehiculeSpeed(vehicle) / 100;
 	document.getElementById("audioStarship").volume = (vehiculeVolume > 1) ? 1.0 : vehiculeVolume;
@@ -355,6 +376,10 @@ function saveGhostPosition(NAV) {
 		"y": NAV.y,
 		"z": NAV.z
 	});
+
+	if(ghostEnabled) {
+		ghostCurrentFrame++;
+	}
 }
 
 // Caméra
