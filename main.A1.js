@@ -132,7 +132,7 @@ function start()
 	aiRotationZ.rotation.z = AItheta ;
 	// the car itself 
 	// simple method to load an object
-	var aiGeometry = Loader.load({filename: 'assets/car_Zup_01.obj', node: aiRotationZ, name: 'AIcar3'}) ;
+	var aiGeometry = Loader.load({filename: 'assets/car_Zup_02.obj', node: aiRotationZ, name: 'AIcar3'}) ;
 	aiGeometry.position.z= +0.25 ;
 
 	//	Skybox
