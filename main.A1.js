@@ -243,7 +243,10 @@ function start()
 	render();
 }
 
-// Infos d'affichage
+// Fantôme
+var ghosts = [];
+
+// Gestion des tours
 var nbTour = 0;
 var lastPlane = "1";
 var laps = [];
@@ -257,13 +260,15 @@ function editInfos(NAV, vehicle) {
 		laps.push(moment());
 		nbTour++;
 		checkpoint15 = false;
+		ghosts = [];
 	}
 
 	document.getElementById("infos").innerHTML = 
-		"Vitesse : " + Math.max(vehicle.speed.x, vehicle.speed.y, vehicle.speed.z).toFixed(0) + "<br>"
+		"Vitesse : " + Math.max(Math.abs(vehicle.speed.x), Math.abs(vehicle.speed.y), Math.abs(vehicle.speed.z)).toFixed(0) + "<br>"
 		+ "Tour : " + (nbTour+1) + "<br>" 
 		+ "Temps total : " + moment(moment().diff(startRaceTime)).format("m:ss.SSS") + "<br>" + showLaps();
 
+	saveGhostPosition(NAV);
 	lastPlane = NAV.active;
 }
 
@@ -289,6 +294,15 @@ function nextLap(NAV) {
 	NAV.x = -221.1913160491978;
 	NAV.y = -89.90764169051636
 	NAV.z = 3.30254723017212;
+}
+
+// Ghost
+function saveGhostPosition(NAV) {
+	ghosts.push({
+		"x": NAV.x,
+		"y": NAV.y,
+		"z": NAV.z
+	});
 }
 
 // Caméra
