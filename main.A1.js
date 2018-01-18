@@ -18,6 +18,7 @@ requirejs(['ModulesLoaderV2.js'], function()
 ) ;
 
 var embarque;
+var startRaceTime = undefined;
 
 function start()
 {
@@ -226,10 +227,16 @@ function start()
 		if (currentlyPressedKeys[90]) // (Z) Up
 		{
 			vehicle.goFront(1200, 1200) ;
+			if(startRaceTime == undefined) {
+				startRaceTime = moment();
+			}
 		}
 		if (currentlyPressedKeys[83]) // (S) Down 
 		{
 			vehicle.brake(100) ;
+		}
+		if(currentlyPressedKeys[72]) { // (H) Hack 
+			nextLap(NAV);
 		}
 	}
 
@@ -276,14 +283,24 @@ function start()
 	render();
 }
 
+<<<<<<< HEAD
 
 
 // Infos d'affichage
+=======
+// Fantôme
+var ghosts = [];
+
+// Gestion des tours
+>>>>>>> 4363cacc29ef2d66025730e0791f3b46ab9bbb7e
 var nbTour = 0;
 var lastPlane = "1";
-var time = 0;
+var laps = [];
 var checkpoint15 = false;
+<<<<<<< HEAD
 //resetCheckpoints();
+=======
+>>>>>>> 4363cacc29ef2d66025730e0791f3b46ab9bbb7e
 
 function editInfos(NAV, vehicle) {
 	document.getElementById('infos').style = 'position: absolute; margin-top: 10px;margin-left: 10px; font-family: Arial; color: white;background-color:rgba(128, 128, 128, .7);padding:4px;';
@@ -291,21 +308,64 @@ function editInfos(NAV, vehicle) {
 		checkpoint15 = true;
 	}
 	if (lastPlane == "0" && NAV.active == "1" && checkpoint15) {
+		laps.push(moment());
 		nbTour++;
 		checkpoint15 = false;
+		ghosts = [];
 	}
+
 	document.getElementById("infos").innerHTML = 
+<<<<<<< HEAD
 		  "Tour : " + nbTour + "<br>" 
 		+ "Temps : " + (time / 60).toFixed(3) + "<br>"
 		+ "<label for=\"camera\">Changer camera</label><input type='text' enable=false value='P' size=2>"; /*+ "<br>"
 		+ "Vitesse : " + Math.max(vehicle.speed.x, vehicle.speed.y, vehicle.speed.z).toFixed(0);*/
 	time++;
+=======
+		"Vitesse : " + Math.max(Math.abs(vehicle.speed.x), Math.abs(vehicle.speed.y), Math.abs(vehicle.speed.z)).toFixed(0) + "<br>"
+		+ "Tour : " + (nbTour+1) + "<br>" 
+		+ "Temps total : " + moment(moment().diff(startRaceTime)).format("m:ss.SSS") + "<br>" + showLaps();
+
+	saveGhostPosition(NAV);
+>>>>>>> 4363cacc29ef2d66025730e0791f3b46ab9bbb7e
 	lastPlane = NAV.active;
+}
+
+function showLaps() {
+	var html = "";
+	for(let i = 0; i < laps.length; i++) {
+		var ref;
+		if (i == 0) {
+			ref = startRaceTime;
+		}
+		else {
+			ref = laps[i-1];
+		}
+		html += "> Tour " + (i+1) + " : " + moment(laps[i].diff(ref)).format("m:ss.SSS") + "<br>";
+	}
+	return html;
+}
+
+// Cheat mode
+function nextLap(NAV) {
+	checkpoint15 = true;
+	NAV.active = "29";
+	NAV.x = -221.1913160491978;
+	NAV.y = -89.90764169051636
+	NAV.z = 3.30254723017212;
+}
+
+// Ghost
+function saveGhostPosition(NAV) {
+	ghosts.push({
+		"x": NAV.x,
+		"y": NAV.y,
+		"z": NAV.z
+	});
 }
 
 // Caméra
 function switchCamera(NAV, camera, vehicle){
-	
 	if(!embarque){
 		switch(NAV.active) {
 			case "0":

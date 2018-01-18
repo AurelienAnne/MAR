@@ -4,14 +4,23 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style> body { margin: 0; } canvas { width: 100%; height: 100% } </style> 
+		<script src="lib/moment-with-locales.min.js"></script>
+		<script>
+			moment.locale("fr");
+		</script>
 	</head> 
 	<body>
+<<<<<<< HEAD
 		<div id="infos" >
-		</div>
-		<script data-main="main.A1.js" src="lib/require.js"></script>
-		<!-- Simple lecture audio -->
-		<audio src="assets/InitialD-DejaVu.ogg" autoplay>
+=======
+		<audio src="assets/InitialD-DejaVu.ogg" type="audio/ogg" autoplay>
 			Votre navigateur ne supporte pas l'élément <code>audio</code>.
 		</audio>
+		<div id="infos" style="position: absolute; margin-top: 10px;
+			margin-left: 10px; font-family: Arial; color: white;
+			background-color:rgba(128, 128, 128, .7);padding:4px;">
+>>>>>>> 4363cacc29ef2d66025730e0791f3b46ab9bbb7e
+		</div>
+		<script data-main="main.A1.js" src="lib/require.js"></script>
 	</body>
 </html>
