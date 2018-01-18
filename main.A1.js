@@ -19,6 +19,8 @@ requirejs(['ModulesLoaderV2.js'], function()
 
 var embarque;
 var startRaceTime = undefined;
+document.getElementById("audioMusic").volume = 0.3;
+document.getElementById("audioStarship").volume = 0.0;
 
 function start()
 {
@@ -270,7 +272,7 @@ function start()
 		carFloorSlope.matrix.copy(NAV.localMatrix(CARx,CARy));
 		// Updates carRotationZ
 		carRotationZ.rotation.z = vehicle.angles.z-Math.PI/2.0 ;
-		renderAIvehicule();
+		//renderAIvehicule();
 		// Camera
 		switchCamera(NAV, renderingEnvironment.camera, vehicle);
 		editInfos(NAV, vehicle);
@@ -283,24 +285,14 @@ function start()
 	render();
 }
 
-<<<<<<< HEAD
-
-
-// Infos d'affichage
-=======
 // Fantôme
 var ghosts = [];
 
 // Gestion des tours
->>>>>>> 4363cacc29ef2d66025730e0791f3b46ab9bbb7e
 var nbTour = 0;
 var lastPlane = "1";
 var laps = [];
 var checkpoint15 = false;
-<<<<<<< HEAD
-//resetCheckpoints();
-=======
->>>>>>> 4363cacc29ef2d66025730e0791f3b46ab9bbb7e
 
 function editInfos(NAV, vehicle) {
 	document.getElementById('infos').style = 'position: absolute; margin-top: 10px;margin-left: 10px; font-family: Arial; color: white;background-color:rgba(128, 128, 128, .7);padding:4px;';
@@ -314,20 +306,17 @@ function editInfos(NAV, vehicle) {
 		ghosts = [];
 	}
 
-	document.getElementById("infos").innerHTML = 
-<<<<<<< HEAD
-		  "Tour : " + nbTour + "<br>" 
-		+ "Temps : " + (time / 60).toFixed(3) + "<br>"
-		+ "<label for=\"camera\">Changer camera</label><input type='text' enable=false value='P' size=2>"; /*+ "<br>"
-		+ "Vitesse : " + Math.max(vehicle.speed.x, vehicle.speed.y, vehicle.speed.z).toFixed(0);*/
-	time++;
-=======
-		"Vitesse : " + Math.max(Math.abs(vehicle.speed.x), Math.abs(vehicle.speed.y), Math.abs(vehicle.speed.z)).toFixed(0) + "<br>"
+	document.getElementById("infos").innerHTML = "Vitesse : " + getVehiculeSpeed(vehicle) + "<br>"
 		+ "Tour : " + (nbTour+1) + "<br>" 
-		+ "Temps total : " + moment(moment().diff(startRaceTime)).format("m:ss.SSS") + "<br>" + showLaps();
+		+ "Temps total : " + moment(moment().diff(startRaceTime)).format("m:ss.SSS") + "<br>"
+		+ showLaps() 
+		+ "<label for=\"camera\">Changer camera</label><input type='text' enable=false value='P' size=2>";
 
 	saveGhostPosition(NAV);
->>>>>>> 4363cacc29ef2d66025730e0791f3b46ab9bbb7e
+
+	const vehiculeVolume = getVehiculeSpeed(vehicle) / 100;
+	document.getElementById("audioStarship").volume = (vehiculeVolume > 1) ? 1.0 : vehiculeVolume;
+
 	lastPlane = NAV.active;
 }
 
@@ -344,6 +333,10 @@ function showLaps() {
 		html += "> Tour " + (i+1) + " : " + moment(laps[i].diff(ref)).format("m:ss.SSS") + "<br>";
 	}
 	return html;
+}
+
+function getVehiculeSpeed(vehicle) {
+	return Math.max(Math.abs(vehicle.speed.x), Math.abs(vehicle.speed.y), Math.abs(vehicle.speed.z)).toFixed(0);	
 }
 
 // Cheat mode
