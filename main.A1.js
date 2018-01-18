@@ -286,8 +286,7 @@ function start()
 	render();
 }
 
-// Fantôme
-// TODO : Garder le meilleur tour du ghost, à recalculer que lorsqu'il a fini son tour
+// Fantôme => Tour du fantôme = bestTour
 var ghosts = [];
 var ghostCurrentFrame = 0;
 var ghostEnabled = false;
@@ -309,6 +308,9 @@ function renderAIvehicule() {
 
 // Gestion des tours
 var nbTour = 0;
+var bestTour = null;
+var actualTour = null;
+var momentVar = null;
 var lastPlane = "1";
 var laps = [];
 var checkpoint15 = false;
@@ -319,7 +321,15 @@ function editInfos(NAV, vehicle) {
 		checkpoint15 = true;
 	}
 	if (lastPlane == "0" && NAV.active == "1" && checkpoint15) {
-		laps.push(moment());
+		momentVar = moment();
+		laps.push(momentVar);
+		if(!bestTour)
+			bestTour = moment(momentVar.diff(startRaceTime)).format("m:ss.SSS")
+		else{
+			actualTour = moment(momentVar.diff(laps[laps.length-2])).format("m:ss.SSS");
+			if(actualTour < bestTour)
+				bestTour = actualTour; 
+		}
 		nbTour++;
 		checkpoint15 = false;
 		ghostEnabled = true;
@@ -328,6 +338,7 @@ function editInfos(NAV, vehicle) {
 	document.getElementById("infos").innerHTML = "Vitesse : " + getVehiculeSpeed(vehicle) + "<br>"
 		+ "Tour : " + (nbTour+1) + "<br>" 
 		+ "Temps total : " + moment(moment().diff(startRaceTime)).format("m:ss.SSS") + "<br>"
+		+ "Meilleur tour : " + ((!bestTour)?"":bestTour) + "<br>"
 		+ showLaps() 
 		+ "<label for=\"camera\">Changer camera</label><input type='text' enable=false value='P' size=2>";
 
