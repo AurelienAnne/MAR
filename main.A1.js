@@ -273,14 +273,23 @@ function start()
 		carFloorSlope.matrix.copy(NAV.localMatrix(CARx,CARy));
 		// Updates carRotationZ
 		carRotationZ.rotation.z = vehicle.angles.z-Math.PI/2.0 ;
-		//renderAIvehicule();
-		// Camera
-		switchCamera(NAV, renderingEnvironment.camera, vehicle);
-		editInfos(NAV, vehicle);
 
-//		renderingEnvironment.camera.rotation.z = vehicle.angles.z-Math.PI/2.0 ;
-		// Rendering
-		renderingEnvironment.renderer.render(renderingEnvironment.scene, renderingEnvironment.camera); 
+		if(nbTour == 5){
+			document.getElementById('fin5Tours').style = 'position: absolute; margin-top: 30%;margin-left: 30%; font-family: Arial; color: white;background-color:rgba(128, 128, 128, .7);padding:4px;';
+			document.getElementById("fin5Tours").innerHTML = "Congratulation ! You won !"
+			+ "Temps total : " + totalTime + "<br>"
+			+ "Meilleur tour : " + ((!bestTour)?"":bestTour) + "<br>"
+			+ showLaps();
+		}else{
+			//renderAIvehicule();
+			// Camera
+			switchCamera(NAV, renderingEnvironment.camera, vehicle);
+			editInfos(NAV, vehicle);
+			
+			//renderingEnvironment.camera.rotation.z = vehicle.angles.z-Math.PI/2.0 ;
+			// Rendering
+			renderingEnvironment.renderer.render(renderingEnvironment.scene, renderingEnvironment.camera);
+		} 
 	};
 
 	render();
@@ -309,6 +318,7 @@ function renderAIvehicule() {
 // Gestion des tours
 var nbTour = 0;
 var bestTour = null;
+var totalTime = null;
 var actualTour = null;
 var momentVar = null;
 var lastPlane = "1";
@@ -320,8 +330,8 @@ function editInfos(NAV, vehicle) {
 	if(NAV.active == "15") {
 		checkpoint15 = true;
 	}
+	momentVar = moment();
 	if (lastPlane == "0" && NAV.active == "1" && checkpoint15) {
-		momentVar = moment();
 		laps.push(momentVar);
 		if(!bestTour)
 			bestTour = moment(momentVar.diff(startRaceTime)).format("m:ss.SSS")
@@ -335,9 +345,10 @@ function editInfos(NAV, vehicle) {
 		ghostEnabled = true;
 	}
 
+	totalTime = moment(momentVar.diff(startRaceTime)).format("m:ss.SSS")
 	document.getElementById("infos").innerHTML = "Vitesse : " + getVehiculeSpeed(vehicle) + "<br>"
 		+ "Tour : " + (nbTour+1) + "<br>" 
-		+ "Temps total : " + moment(moment().diff(startRaceTime)).format("m:ss.SSS") + "<br>"
+		+ "Temps total : " + totalTime + "<br>"
 		+ "Meilleur tour : " + ((!bestTour)?"":bestTour) + "<br>"
 		+ showLaps() 
 		+ "<label for=\"camera\">Changer camera</label><input type='text' enable=false value='P' size=2>";
