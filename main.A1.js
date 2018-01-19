@@ -11,18 +11,28 @@ requirejs(['ModulesLoaderV2.js'], function()
 			                              "myJS/ThreeLightingEnv.js", 
 			                              "myJS/ThreeLoadingEnv.js", 
 			                              "myJS/navZ.js",
-			                              "FlyingVehicle.js"]) ;
+										  "FlyingVehicle.js", "Crates.js", "Camera.js", "ATH.js" ]);
 			// Loads modules contained in includes and starts main function
 			ModulesLoader.loadModules(start) ;
 		}
 ) ;
 
-var embarque;
 var startRaceTime = undefined;
+var ath;
 var AIvehicle;
+
+// Gestion des tours
+var nbLap = 0;
+var bestTour = null;
+var actualTour = null;
+var momentVar = null;
+var lastPlane = "1";
+var laps = [];
+var checkpoint15 = false;
+
 document.getElementById("audioMusic").volume = 0.3;
 document.getElementById("audioStarship").volume = 0.0;
-
+			
 function start()
 {
 	//	----------------------------------------------------------------------------
@@ -80,7 +90,11 @@ function start()
 	Loader.loadMesh('assets','circuit_Zup_02','obj',renderingEnvironment.scene,'circuit',	-340,-340,0,'front');
 	//Loader.loadMesh('assets','tree_Zup_02','obj',	renderingEnvironment.scene,'trees',	-340,-340,0,'double');
 	Loader.loadMesh('assets','arrivee_Zup_01','obj',	renderingEnvironment.scene,'decors',	-340,-340,0,'front');
-		
+
+	var crates = new Crates(renderingEnvironment.scene);
+	var camera = new Camera();
+	ath = new ATH();
+	
 	//	Car
 	// car Translation
 	var carPosition = new THREE.Object3D(); 
@@ -109,7 +123,6 @@ function start()
 	renderingEnvironment.camera.position.z = 5.0 ;
 	renderingEnvironment.camera.position.y = 0.0 ;
 	renderingEnvironment.camera.rotation.x = 85.0*3.14159/180.0 ;
-	embarque = true;
 		
 
 	//	AICar
@@ -191,22 +204,8 @@ function start()
 	//	---------------------------------------------------------------------------
 	function handleKeyDown(event) { 
 		currentlyPressedKeys[event.keyCode] = true;
-		if (event.keyCode == 80) // (P) Down 
-		{
-			if(embarque){
-				embarque = false;
-				carGeometry.remove(renderingEnvironment.camera);
-				switchCamera(NAV, renderingEnvironment.camera, vehicle);
-			}else{
-				embarque = true;
-				carGeometry.add(renderingEnvironment.camera) ;
-				renderingEnvironment.camera.position.x = 0.0 ;
-				renderingEnvironment.camera.position.z = 5.0 ;
-				renderingEnvironment.camera.position.y = 0.0 ;
-				renderingEnvironment.camera.rotation.x = 85.0 * Math.PI/180.0 ;
-				renderingEnvironment.camera.rotation.y = 0 * Math.PI/180.0 ;
-				renderingEnvironment.camera.rotation.z = 0.0 * Math.PI/180.0 ;
-			}
+		if (event.keyCode == 80) { // (P) Down 
+			camera.switch(NAV, renderingEnvironment.camera, vehicle, carGeometry);			
 		}
 	}
 	function handleKeyUp(event) {currentlyPressedKeys[event.keyCode] = false;}
@@ -274,22 +273,54 @@ function start()
 		// Updates carRotationZ
 		carRotationZ.rotation.z = vehicle.angles.z-Math.PI/2.0 ;
 
-		if(nbTour == 5){
-			document.getElementById('fin5Tours').style = 'position: absolute; margin-top: 30%;margin-left: 30%; font-family: Arial; color: white;background-color:rgba(128, 128, 128, .7);padding:4px;';
-			document.getElementById("fin5Tours").innerHTML = "Congratulation ! You won !"
-			+ "Temps total : " + totalTime + "<br>"
-			+ "Meilleur tour : " + ((!bestTour)?"":bestTour) + "<br>"
-			+ showLaps();
-		}else{
-			//renderAIvehicule();
+
+
+		if (nbLap == 5) {
+			ath.showEnd();
+		} else {
 			// Camera
-			switchCamera(NAV, renderingEnvironment.camera, vehicle);
-			editInfos(NAV, vehicle);
+			camera.update(NAV, renderingEnvironment.camera, vehicle);
 			
-			//renderingEnvironment.camera.rotation.z = vehicle.angles.z-Math.PI/2.0 ;
+			// Crates
+			const crate = crates.detectCrateCollision(NAV);
+			if (crate != undefined) {
+				ath.score += crate.pts;
+			}
+			
+			// Laps
+			if(NAV.active == "15") {
+				checkpoint15 = true;
+			}
+			momentVar = moment();
+			if (lastPlane == "0" && NAV.active == "1" && checkpoint15) {
+				laps.push(momentVar);
+				if(!bestTour)
+					bestTour = moment(momentVar.diff(startRaceTime)).format("m:ss.SSS")
+				else{
+					actualTour = moment(momentVar.diff(laps[laps.length-2])).format("m:ss.SSS");
+					if(actualTour < bestTour)
+						bestTour = actualTour; 
+				}
+				nbLap++;
+				checkpoint15 = false;
+				ghostEnabled = true;
+			}
+			lastPlane = NAV.active;
+		
+			// ATH
+			totalTime = moment(momentVar.diff(startRaceTime)).format("m:ss.SSS")
+			ath.update(NAV, vehicle, nbLap);
+		
+			saveGhostPosition(NAV);	
+			renderAIvehicule();
+		
+			// Sound
+			const vehiculeVolume = vehicle.getVehiculeSpeed() / 100;
+			document.getElementById("audioStarship").volume = (vehiculeVolume > 1) ? 1.0 : vehiculeVolume;			
+
 			// Rendering
-			renderingEnvironment.renderer.render(renderingEnvironment.scene, renderingEnvironment.camera);
-		} 
+			renderingEnvironment.renderer.render(renderingEnvironment.scene, renderingEnvironment.camera); 
+		}
 	};
 
 	render();
@@ -311,75 +342,7 @@ function renderAIvehicule() {
 		AIvehicle.position.x = ghosts[ghostCurrentFrame].x
 		AIvehicle.position.y = ghosts[ghostCurrentFrame].y;
 		AIvehicle.position.z = ghosts[ghostCurrentFrame].z;
-	}
-	
-}
-
-// Gestion des tours
-var nbTour = 0;
-var bestTour = null;
-var totalTime = null;
-var actualTour = null;
-var momentVar = null;
-var lastPlane = "1";
-var laps = [];
-var checkpoint15 = false;
-
-function editInfos(NAV, vehicle) {
-	document.getElementById('infos').style = 'position: absolute; margin-top: 10px;margin-left: 10px; font-family: Arial; color: white;background-color:rgba(128, 128, 128, .7);padding:4px;';
-	if(NAV.active == "15") {
-		checkpoint15 = true;
-	}
-	momentVar = moment();
-	if (lastPlane == "0" && NAV.active == "1" && checkpoint15) {
-		laps.push(momentVar);
-		if(!bestTour)
-			bestTour = moment(momentVar.diff(startRaceTime)).format("m:ss.SSS")
-		else{
-			actualTour = moment(momentVar.diff(laps[laps.length-2])).format("m:ss.SSS");
-			if(actualTour < bestTour)
-				bestTour = actualTour; 
-		}
-		nbTour++;
-		checkpoint15 = false;
-		ghostEnabled = true;
-	}
-
-	totalTime = moment(momentVar.diff(startRaceTime)).format("m:ss.SSS")
-	document.getElementById("infos").innerHTML = "Vitesse : " + getVehiculeSpeed(vehicle) + "<br>"
-		+ "Tour : " + (nbTour+1) + "<br>" 
-		+ "Temps total : " + totalTime + "<br>"
-		+ "Meilleur tour : " + ((!bestTour)?"":bestTour) + "<br>"
-		+ showLaps() 
-		+ "<label for=\"camera\">Changer camera</label><input type='text' enable=false value='P' size=2>";
-
-	saveGhostPosition(NAV);	
-	renderAIvehicule();
-	
-
-	const vehiculeVolume = getVehiculeSpeed(vehicle) / 100;
-	document.getElementById("audioStarship").volume = (vehiculeVolume > 1) ? 1.0 : vehiculeVolume;
-
-	lastPlane = NAV.active;
-}
-
-function showLaps() {
-	var html = "";
-	for(let i = 0; i < laps.length; i++) {
-		var ref;
-		if (i == 0) {
-			ref = startRaceTime;
-		}
-		else {
-			ref = laps[i-1];
-		}
-		html += "> Tour " + (i+1) + " : " + moment(laps[i].diff(ref)).format("m:ss.SSS") + "<br>";
-	}
-	return html;
-}
-
-function getVehiculeSpeed(vehicle) {
-	return Math.max(Math.abs(vehicle.speed.x), Math.abs(vehicle.speed.y), Math.abs(vehicle.speed.z)).toFixed(0);	
+	}	
 }
 
 // Cheat mode
@@ -401,115 +364,5 @@ function saveGhostPosition(NAV) {
 
 	if(ghostEnabled) {
 		ghostCurrentFrame++;
-	}
-}
-
-// Caméra
-function switchCamera(NAV, camera, vehicle){
-	if(!embarque){
-		switch(NAV.active) {
-			case "0":
-			case "1":
-				camera.lookAt(NAV);
-				camera.position.x = -220;
-				camera.position.y = -150 ;
-				camera.position.z = 70;
-				camera.rotation.x = 70.0 * Math.PI/180.0;
-				camera.rotation.z = 0.0 * Math.PI/180.0;
-				break;
-			case "2":
-			case "3":
-			case "4":
-				camera.lookAt(NAV);
-				camera.position.x = -250 ;
-				camera.position.y = 260 ;
-				camera.position.z = NAV.z+40;
-				camera.rotation.x = -60.0 * Math.PI/180.0;
-				camera.rotation.z = -165.0 * Math.PI/180.0;
-				break;
-			case "5":
-			case "6":
-			case "7":
-				camera.lookAt(NAV);
-				camera.position.x = -80;
-				camera.position.y = 260 ;
-				camera.position.z = NAV.z+40;
-				camera.rotation.x = -60.0 * Math.PI/180.0;
-				camera.rotation.z = -165.0 * Math.PI/180.0;
-				break;
-			case "8":
-			case "9":
-			case "10":
-				camera.lookAt(NAV);
-				camera.position.x = 30;
-				camera.position.y = 50 ;
-				camera.position.z = 80;
-				camera.rotation.x = 90.0 * Math.PI/180.0;
-				camera.rotation.z = 0.0 * Math.PI/180.0;
-				break;
-			case "11":
-			case "12":
-			case "13":
-			case "14":
-				camera.lookAt(NAV);
-				camera.position.x = 230;
-				camera.position.y = 100 ;
-				camera.position.z = 80;
-				camera.rotation.x = 290.0 * Math.PI/180.0;
-				camera.rotation.z = 180.0 * Math.PI/180.0;
-				break;
-			case "15":
-			case "16":
-			case "17":
-				camera.lookAt(NAV);
-				camera.position.x = 270;
-				camera.position.y = -200 ;
-				camera.position.z = 80;
-				camera.rotation.x = 90.0 * Math.PI/180.0;
-				camera.rotation.z = 0.0 * Math.PI/180.0;
-				break;
-			case "18":
-			case "19":
-			case "20":
-				camera.lookAt(NAV);
-				camera.position.x = 50;
-				camera.position.y = -300 ;
-				camera.position.z = 100;
-				camera.rotation.x = 90.0 * Math.PI/180.0;
-				camera.rotation.z = 0.0 * Math.PI/180.0;
-				break;
-			case "21":
-			case "22":
-			case "23":
-			case "24":
-			case "25":
-				camera.lookAt(NAV);
-				camera.position.x = -40;
-				camera.position.y = 20 ;
-				camera.position.z = 160;
-				camera.rotation.x = 290.0 * Math.PI/180.0;
-				camera.rotation.z = 180.0 * Math.PI/180.0;
-				break;
-			case "26":
-			case "27":
-			case "28":
-			case "29":
-			case "30":
-				camera.lookAt(NAV);
-				camera.position.x = -180;
-				camera.position.y = -330 ;
-				camera.position.z = 100;
-				camera.rotation.x = 70.0 * Math.PI/180.0;
-				camera.rotation.z = 0.0 * Math.PI/180.0;
-				break;
-			default:
-				camera.lookAt(NAV);
-				camera.position.x = NAV.x ;
-				camera.position.y = NAV.y ;
-				camera.position.z = NAV.z+50+vehicle.speed.length()*2 ;
-				camera.rotation.x = 0.0 * Math.PI/180.0;
-				camera.rotation.z = 0.0 * Math.PI/180.0;
-				break;
-    	}
 	}
 }
