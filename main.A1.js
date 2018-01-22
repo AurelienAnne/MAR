@@ -11,20 +11,22 @@ requirejs(['ModulesLoaderV2.js'], function()
 			                              "myJS/ThreeLightingEnv.js", 
 			                              "myJS/ThreeLoadingEnv.js", 
 			                              "myJS/navZ.js",
-										  "FlyingVehicle.js",
-											"Vehicule.js"]) ;
+										  "Vehicule.js",
+										  "FlyingVehicle.js", 
+										  "Crates.js", 
+										  "Camera.js", 
+										  "ATH.js" ]);
 			// Loads modules contained in includes and starts main function
 			ModulesLoader.loadModules(start) ;
 		}
 ) ;
 
-var embarque;
 var startRaceTime = undefined;
 var playerCar;
 var AIcar;
 document.getElementById("audioMusic").volume = 0.3;
 document.getElementById("audioStarship").volume = 0.0;
-
+			
 function start()
 {
 	//	----------------------------------------------------------------------------
@@ -58,6 +60,13 @@ function start()
 	//Loader.loadMesh('assets','tree_Zup_02','obj',	renderingEnvironment.scene,'trees',	-340,-340,0,'double');
 	Loader.loadMesh('assets','arrivee_Zup_01','obj',	renderingEnvironment.scene,'decors',	-340,-340,0,'front');
 		
+
+
+	var crates = new Crates(renderingEnvironment.scene);
+	var camera = new Camera();
+	ath = new ATH();
+
+
 	// attach the scene camera to car
 	playerCar.carGeometry.add(renderingEnvironment.camera) ;
 	renderingEnvironment.camera.position.x = 0.0 ;
@@ -249,7 +258,55 @@ function start()
 			// Updates carRotationZ
 			v.carRotationZ.rotation.z = v.vehicle.angles.z-Math.PI/2.0 ;
 		}
+
+		if (nbLap == 5) {
+			ath.showEnd();
+		} else {
+			// Camera
+			camera.update(NAV, renderingEnvironment.camera, playerCar.vehicle);
+			
+			// Crates
+			const crate = crates.detectCrateCollision(NAV);
+			if (crate != undefined) {
+				ath.score += crate.pts;
+			}
+			
+			// Laps
+			if(NAV.active == "15") {
+				checkpoint15 = true;
+			}
+			momentVar = moment();
+			if (lastPlane == "0" && NAV.active == "1" && checkpoint15) {
+				laps.push(momentVar);
+				if(!bestTour)
+					bestTour = moment(momentVar.diff(startRaceTime)).format("m:ss.SSS")
+				else{
+					actualTour = moment(momentVar.diff(laps[laps.length-2])).format("m:ss.SSS");
+					if(actualTour < bestTour)
+						bestTour = actualTour; 
+				}
+				nbLap++;
+				checkpoint15 = false;
+				ghostEnabled = true;
+			}
+			lastPlane = NAV.active;
+		
+			// ATH
+			totalTime = moment(momentVar.diff(startRaceTime)).format("m:ss.SSS")
+			ath.update(NAV, playerCar.vehicle, nbLap);
+		
+			saveGhostPosition(NAV);	
+			renderAIvehicule();
+		
+			// Sound
+			const vehiculeVolume = playerCar.vehicle.getVehiculeSpeed() / 100;
+			document.getElementById("audioStarship").volume = (vehiculeVolume > 1) ? 1.0 : vehiculeVolume;			
+	
+			// Rendering
+			renderingEnvironment.renderer.render(renderingEnvironment.scene, renderingEnvironment.camera); 
+	}
 	};
+
 
 	render();
 }
@@ -297,7 +354,7 @@ function renderAIvehicule(NAV) {
 		// Updates carFloorSlopefunction
 		v.carFloorSlope.matrixAutoUpdate = false;		
 		//v.carFloorSlope.matrix.copy(NAV.localMatrix(v.CARx, v.CARy));					
-		
+
 		// Updates carRotationZ
 		v.carRotationZ.rotation.z = v.vehicle.angles.z-Math.PI/2.0 ;
 		currentGhostFrame++;
@@ -312,6 +369,7 @@ function renderAIvehicule(NAV) {
 
 // Gestion des tours
 var nbTour = 0;
+var nbLap = 0;
 var bestTurn = 0;
 var bestTour = null;
 var actualTour = null;

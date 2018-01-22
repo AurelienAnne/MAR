@@ -193,4 +193,7 @@ function FlyingVehicle(configuration)
 		this.reset() ;
 	} ;
 	
+	this.getVehiculeSpeed = function() {
+		return Math.max(Math.abs(this.speed.x), Math.abs(this.speed.y), Math.abs(this.speed.z)).toFixed(0);
+	}
 }
