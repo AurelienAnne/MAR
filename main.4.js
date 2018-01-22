@@ -313,8 +313,8 @@ function start()
 		gen.addModifier(new ParticleSystem.LifeTimeModifier_Class());
 		gen.addModifier(new ParticleSystem.ForceModifier_Weight_Class());
 		gen.addModifier(new ParticleSystem.PositionModifier_EulerItegration_Class());
-		gen.addModifier(new ParticleSystem.OpacityModifier_TimeToDeath_Class(new Interpolators.Linear_Class(0.7, 0.1)));
-		gen.addModifier(new ParticleSystem.ColorModifier_TimeToDeath_Class({ r: 128, g: 12, b: 12}, { r: 139, g: 0, b: 0}))
+		gen.addModifier(new ParticleSystem.OpacityModifier_TimeToDeath_Class(new Interpolators.Linear_Class(0.9, 0.3)));
+		gen.addModifier(new ParticleSystem.ColorModifier_TimeToDeath_Class({ r: 77/255, g: 77/255, b: 0}, { r: 139/255, g: 0, b: 0}))
 		renderingEnvironment.addToScene(gen.particleSystem);
 	});	
 	
@@ -374,7 +374,7 @@ function start()
 		handleKeys();
 		// Rendering
 		particlesGenerators.forEach(particlesSys => {
-			particlesSys.animate(0.2, renderingEnvironment.scene);
+			particlesSys.animate(0.5, renderingEnvironment.scene);
 		});
 		renderingEnvironment.renderer.render(renderingEnvironment.scene, renderingEnvironment.camera);
 
