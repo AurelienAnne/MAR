@@ -294,15 +294,19 @@ function renderAIvehicule(NAV) {
 		// Updates the vehicle
 		v.vehicle.position.x = ghosts[currentGhostFrame].x ;
 		v.vehicle.position.y = ghosts[currentGhostFrame].y ;
-		// Updates carFloorSlope
+		// Updates carFloorSlopefunction
 		v.carFloorSlope.matrixAutoUpdate = false;		
 		//v.carFloorSlope.matrix.copy(NAV.localMatrix(v.CARx, v.CARy));					
 		
 		// Updates carRotationZ
 		v.carRotationZ.rotation.z = v.vehicle.angles.z-Math.PI/2.0 ;
 		currentGhostFrame++;
-		if(currentGhostFrame >= ghosts.length)
-		currentGhostFrame = 0;
+		if(currentGhostFrame >= ghosts.length){
+			currentGhostFrame = 0;
+			if(ghosts.best != null)
+				ghosts = ghosts.best;
+		}
+		//console.log(NAV.planeSet[0].isIn(AIcar.vehicle.position.x, AIcar.vehicle.position.y));
 	}	
 }
 
@@ -359,6 +363,10 @@ function editInfos(NAV, vehicle) {
 	document.getElementById("audioStarship").volume = (vehiculeVolume > 1) ? 1.0 : vehiculeVolume;
 
 	lastPlane = NAV.active;
+	
+
+	
+	//console.log(NAV.planeSet[0].isIn(AIcar.vehicle.position.x, AIcar.vehicle.position.y));
 }
 
 function showLaps() {
