@@ -1,5 +1,3 @@
-ModulesLoader.requireModules(['threejs/three.min.js', 'Physics.js', 'DebugHelper.js']) ;
-
 const CRATE_SIZE = 5;
 const CRATES = [
     { 

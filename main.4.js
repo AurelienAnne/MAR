@@ -11,7 +11,9 @@ requirejs(['ModulesLoaderV2.js'], function()
 			                              "myJS/ThreeLightingEnv.js", 
 			                              "myJS/ThreeLoadingEnv.js", 
 			                              "myJS/navZ.js",
-			                              "FlyingVehicle.js"]) ;
+										  "FlyingVehicle.js",
+										  "ParticleSystem.js",
+										  "Interpolators.js"]) ;
 			// Loads modules contained in includes and starts main function
 			ModulesLoader.loadModules(start) ;
 		}
@@ -37,8 +39,6 @@ function start()
 	//	Loading env
 	var Loader = new ThreeLoadingEnv();
 
-<<<<<<< HEAD
-=======
 	/**
 	 * Corps de l'helico
 	 */
@@ -260,8 +260,64 @@ function start()
 	/**
 	 * Fin de l'helico
 	 */
+
+	/**
+	 * Particules
+	 */
+
+	 // TODO: Question 8 - 9
+	var particlesGenerators = [];
+
+	particlesGenerators.push(new ParticleSystem.Engine_Class({ 
+		textureFile: 'assets/particles/particle.png',
+		particlesCount: 10000,
+		blendingMode: THREE.AdditiveBlending
+	}));
+	particlesGenerators.push(new ParticleSystem.Engine_Class({ 
+		textureFile: 'assets/particles/particle.png',
+		particlesCount: 10000,
+		blendingMode: THREE.AdditiveBlending
+	}));
+
+	particlesGenerators[0].addEmitter(new ParticleSystem.ConeEmitter_Class({
+		cone: {
+			center: new THREE.Vector3(-8.5, 2, 4),
+			height: new THREE.Vector3(0,-1,0),
+			radius: 1,
+			flow: 1000
+		},
+		particle: {
+			speed: new MathExt.Interval_Class(5, 10),
+			mass: new MathExt.Interval_Class(0.1, 0.3),
+			size: new MathExt.Interval_Class(0.1, 1.0),
+			lifeTime: new MathExt.Interval_Class(1.0, 7.0)
+		}
+	}));
+
+	particlesGenerators[1].addEmitter(new ParticleSystem.ConeEmitter_Class({
+		cone: {
+			center: new THREE.Vector3(8.5, 2, 4),
+			height: new THREE.Vector3(0,-1,0),
+			radius: 1,
+			flow: 1000
+		},
+		particle: {
+			speed: new MathExt.Interval_Class(5, 10),
+			mass: new MathExt.Interval_Class(0.1, 0.3),
+			size: new MathExt.Interval_Class(0.1, 1.0),
+			lifeTime: new MathExt.Interval_Class(1.0, 7.0)
+		}
+	}));
+
+	particlesGenerators.forEach(gen => {		
+		gen.addModifier(new ParticleSystem.LifeTimeModifier_Class());
+		gen.addModifier(new ParticleSystem.ForceModifier_Weight_Class());
+		gen.addModifier(new ParticleSystem.PositionModifier_EulerItegration_Class());
+		gen.addModifier(new ParticleSystem.OpacityModifier_TimeToDeath_Class(new Interpolators.Linear_Class(0.7, 0.1)));
+		gen.addModifier(new ParticleSystem.ColorModifier_TimeToDeath_Class({ r: 128, g: 12, b: 12}, { r: 139, g: 0, b: 0}))
+		renderingEnvironment.addToScene(gen.particleSystem);
+	});	
 	
->>>>>>> 14cb69c6c0ece159f330607b99ee8fe978b87983
 	// Camera setup
 	renderingEnvironment.camera.position.x = 0 ;
 	renderingEnvironment.camera.position.y = 0 ;
@@ -317,15 +373,14 @@ function start()
 		requestAnimationFrame( render );
 		handleKeys();
 		// Rendering
-<<<<<<< HEAD
-		renderingEnvironment.renderer.render(renderingEnvironment.scene, renderingEnvironment.camera); 
-=======
+		particlesGenerators.forEach(particlesSys => {
+			particlesSys.animate(0.2, renderingEnvironment.scene);
+		});
 		renderingEnvironment.renderer.render(renderingEnvironment.scene, renderingEnvironment.camera);
 
 		helicoAxeC.rotation.y += 15*Math.PI/180;
 		helicoAxeG.rotation.y += 15*Math.PI/180;
 		helicoAxeD.rotation.y += 15*Math.PI/180;
->>>>>>> 14cb69c6c0ece159f330607b99ee8fe978b87983
 	};
 
 	render(); 
