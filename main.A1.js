@@ -18,9 +18,14 @@ requirejs(['ModulesLoaderV2.js'], function()
 										  "ATH.js",
 										  "Helico.js" ]);
 			// Loads modules contained in includes and starts main function
-			ModulesLoader.loadModules(start) ;
+			ModulesLoader.loadModules(init);
+			//ModulesLoader.loadModules(start) ;
 		}
 ) ;
+
+var renderingEnvironment;
+var Lights;
+var Loader;
 
 var startRaceTime = undefined;
 var actualTour = null;
@@ -29,6 +34,23 @@ var hasChosenHelico = true;
 document.getElementById("audioMusic").volume = 0.3;
 document.getElementById("audioStarship").volume = 0.0;
 
+function init(){
+	//	rendering env
+	renderingEnvironment =  new ThreeRenderingEnv();
+
+	//	lighting env
+	Lights = new ThreeLightingEnv('rembrandt','neutral','spot',renderingEnvironment,5000);
+
+	//	Loading env
+	Loader = new ThreeLoadingEnv();
+	
+	ath = new ATH(Loader, renderingEnvironment);
+	ath.MainMenu.show();
+}
+
+/**
+ * Appel de la fonction start dans le callback de ath.MainMenu.show();
+ */
 function start()
 {
 	//	----------------------------------------------------------------------------
@@ -46,23 +68,9 @@ function start()
 	var CARx = -220; 
 	var CARy = 0 ; 
 	var CARz = 0 ;
-	var CARtheta = 0 ; 
+	var CARtheta = 0 ;
 
-	//	rendering env
-	var renderingEnvironment =  new ThreeRenderingEnv();
 
-	//	lighting env
-	var Lights = new ThreeLightingEnv('rembrandt','neutral','spot',renderingEnvironment,5000);
-
-	//	Loading env
-	var Loader = new ThreeLoadingEnv();
-	
-	ath = new ATH(Loader, renderingEnvironment);
-	ath.MainMenu.show();
-
-	// TODO : Bloquer avec le menu principal
-
-	changePlayerCar(true, Loader, renderingEnvironment)
 	AIcar = new Vehicule(-220,-50,0,0,"AIcar", Loader, renderingEnvironment);
 
 	//	Meshes
@@ -74,12 +82,6 @@ function start()
 
 	var crates = new Crates(renderingEnvironment.scene);
 	var camera = new Camera();
-	
-	
-	//	Car
-	// the car itself 
-	// simple method to load an object
-	
 
 	//	Skybox
 	Loader.loadSkyBox('assets/maps',['px','nx','py','ny','pz','nz'],'jpg', renderingEnvironment.scene, 'sky',4000);
@@ -280,7 +282,7 @@ function start()
 			v.carRotationZ.rotation.z = v.vehicle.angles.z-Math.PI/2.0 ;
 		}
 
-		if (nbLap == 5) {
+		if (nbLap >= 5) {
 			ath.showEnd();
 		} else {
 			// Camera
@@ -325,7 +327,7 @@ function start()
 	
 			// Rendering
 			renderingEnvironment.renderer.render(renderingEnvironment.scene, renderingEnvironment.camera); 
-	}
+		}
 	};
 
 	render();

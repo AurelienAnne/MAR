@@ -27,7 +27,7 @@ function ATH(Loader, renderingEnvironment) {
 
     this.MainMenu = {
         show : function(callback) {
-            document.getElementById('mainMenu').style = cssMiddle(400, 400) + cssAthStyle() + 'visible: true;';    
+            document.getElementById('mainMenu').style = cssMiddle(420, 420) + cssAthStyle() + 'visible: true;';    
             document.getElementById("mainMenu").innerHTML = '<div style="text-align:center;">'
                 + '<h1 style="font-size: 36px;text-align:center;">MARace</h1>'
                 + '<p style="font-size: 24px;"><b>Jouer avec</b>'
@@ -37,19 +37,26 @@ function ATH(Loader, renderingEnvironment) {
                 + '<label for="vehicle_helico">L\'hélico</label></p>'
                 + '<p><input type="checkbox" id="ghostEnabled" name="ghostEnabled" checked>'
                 + '<label for="ghostEnabled">Activer le fantôme</label></p>'
-                + '<p>Commande : ...</p>'
+                + '<p>Commandes :</p>'
+                + '<p>Avancer : Z</p>'
+                + '<p>Freiner : S</p>'
+                + '<p>Droite  : D</p>'
+                + '<p>Gauche  : Q</p>'
                 + '<button style="font-size: 20px;" onClick="ath.MainMenu.submit()">Jouer</button>';
         },     
         submit : function () { 
             changePlayerCar(document.getElementById("vehicle_helico").checked, Loader, renderingEnvironment);
             document.getElementById('mainMenu').style = 'display: none;';
+
+            // Lancement du chargement du jeu avec les bons assets
+            start();
         }
     }
 
     this.showEnd = function() {
         document.getElementById('fin5Tours').style = cssMiddle(200, 380) + cssAthStyle();    
         document.getElementById("fin5Tours").innerHTML = '<img height="200" src="assets/trophee.gif" style="float:left;">'
-            + "<h3>Congratulation ! You won !</h3>"
+            + "<h3>Victoire !</h3>"
             + "Score  " + this.score + "<br>"
 			+ "Temps total : " + totalTime + "<br>"
 			+ "Meilleur tour : " + ((!bestTour)?"":bestTour) + "<br>"

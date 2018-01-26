@@ -148,6 +148,20 @@ function start()
 		{
 			renderingEnvironment.scene.rotateOnAxis(new THREE.Vector3(1.0,0.0,0.0), -rotationIncrement) ;
 		}
+
+		if (currentlyPressedKeys[65]) // (A) Down 
+		{
+			helico.helicoTurbineD.rotation.z += 2*Math.PI/180;
+			helico.helicoTurbineG.rotation.z += 2*Math.PI/180;
+
+			particlesGenerators[1].emitters[0].center = 
+					(helico.helicoAxeD.position);
+		}
+		if (currentlyPressedKeys[69]) // (E) Down 
+		{
+			helico.helicoTurbineD.rotation.z += -2*Math.PI/180;
+			helico.helicoTurbineG.rotation.z += -2*Math.PI/180;
+		}
 	}
 
 	//	window resize
