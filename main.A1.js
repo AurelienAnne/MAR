@@ -28,7 +28,7 @@ var momentVar = null;
 var hasChosenHelico = true;
 document.getElementById("audioMusic").volume = 0.3;
 document.getElementById("audioStarship").volume = 0.0;
-			
+
 function start()
 {
 	//	----------------------------------------------------------------------------
@@ -56,12 +56,13 @@ function start()
 
 	//	Loading env
 	var Loader = new ThreeLoadingEnv();
+	
+	ath = new ATH(Loader, renderingEnvironment);
+	ath.MainMenu.show();
 
-	if(hasChosenHelico){
-		playerCar = new Helico(-220,0,0,0,"PlayerCar", Loader, renderingEnvironment);
-	}else{
-		playerCar = new Vehicule(-220,0,0,0,"PlayerCar", Loader, renderingEnvironment);
-	}	
+	// TODO : Bloquer avec le menu principal
+
+	changePlayerCar(true, Loader, renderingEnvironment)
 	AIcar = new Vehicule(-220,-50,0,0,"AIcar", Loader, renderingEnvironment);
 
 	//	Meshes
@@ -73,19 +74,12 @@ function start()
 
 	var crates = new Crates(renderingEnvironment.scene);
 	var camera = new Camera();
-	ath = new ATH();
+	
 	
 	//	Car
 	// the car itself 
 	// simple method to load an object
-	var carGeometry = playerCar.carGeometry;
-	carGeometry.position.z= +0.25 ;
-	// attach the scene camera to car
-	playerCar.carGeometry.add(renderingEnvironment.camera) ;
-	renderingEnvironment.camera.position.x = 0.0 ;
-	renderingEnvironment.camera.position.z = 10.0 ;
-	renderingEnvironment.camera.position.y = -10.0 ;
-	renderingEnvironment.camera.rotation.x = 85.0*3.14159/180.0 ;
+	
 
 	//	Skybox
 	Loader.loadSkyBox('assets/maps',['px','nx','py','ny','pz','nz'],'jpg', renderingEnvironment.scene, 'sky',4000);
@@ -320,8 +314,8 @@ function start()
 		
 			// ATH
 			totalTime = moment(momentVar.diff(startRaceTime)).format("m:ss.SSS")
-			ath.update(NAV, playerCar.vehicle, nbLap);
-		
+			ath.update(NAV, playerCar.vehicle, nbLap);			
+
 			saveGhostPosition(NAV);	
 			renderAIvehicule();
 		
@@ -394,7 +388,6 @@ function renderAIvehicule(NAV) {
 }
 
 // Gestion des tours
-var nbTour = 0;
 var nbLap = 0;
 var bestTurn = 0;
 var bestTour = null;
@@ -414,26 +407,26 @@ function editInfos(NAV, vehicle) {
 		laps.push(momentVar);
 		if(!bestTour){
 			bestTour = moment(momentVar.diff(startRaceTime)).format("m:ss.SSS");
-			bestTurn = nbTour;
+			bestTurn = nbLap;
 			ghosts.best = inputCurrentTurn;
 		}
 		else{
 			actualTour = moment(momentVar.diff(laps[laps.length-2])).format("m:ss.SSS");
 			if(actualTour < bestTour){
 				bestTour = actualTour;				
-				bestTurn = nbTour;
+				bestTurn = nbLap;
 				ghosts.best = inputCurrentTurn;
 			}
 				
 		}
-		nbTour++;
+		nbLap++;
 		inputCurrentTurn = [];
 		checkpoint15 = false;
 		ghostEnabled = true;
 	}
 
 	document.getElementById("infos").innerHTML = "Vitesse : " + getVehiculeSpeed(vehicle) + "<br>"
-		+ "Tour : " + (nbTour+1) + "<br>" 
+		+ "Tour : " + (nbLap+1) + "<br>" 
 		+ "Temps total : " + moment(moment().diff(startRaceTime)).format("m:ss.SSS") + "<br>"
 		+ "Meilleur temps : " + ((!bestTour)?"":bestTour) + " au tour n°"+ (bestTurn+1)+"<br>"
 		+ showLaps() 
@@ -470,6 +463,24 @@ function showLaps() {
 
 function getVehiculeSpeed(vehicle) {
 	return Math.max(Math.abs(vehicle.speed.x), Math.abs(vehicle.speed.y), Math.abs(vehicle.speed.z)).toFixed(0);	
+}
+
+function changePlayerCar(helicoEnabled, Loader, renderingEnvironment) {
+	hasChosenHelico = helicoEnabled;
+	if(hasChosenHelico){
+		playerCar = new Helico(-220,0,0,0,"PlayerCar", Loader, renderingEnvironment);
+	} else{
+		playerCar = new Vehicule(-220,0,0,0,"PlayerCar", Loader, renderingEnvironment);
+	}	
+
+	var carGeometry = playerCar.carGeometry;
+	carGeometry.position.z= +0.25 ;
+	// attach the scene camera to car
+	playerCar.carGeometry.add(renderingEnvironment.camera) ;
+	renderingEnvironment.camera.position.x = 0.0 ;
+	renderingEnvironment.camera.position.z = 10.0 ;
+	renderingEnvironment.camera.position.y = -10.0 ;
+	renderingEnvironment.camera.rotation.x = 85.0*3.14159/180.0 ;
 }
 
 // Cheat mode
