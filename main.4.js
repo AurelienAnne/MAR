@@ -11,8 +11,6 @@ requirejs(['ModulesLoaderV2.js'], function()
 			                              "myJS/ThreeLightingEnv.js", 
 			                              "myJS/ThreeLoadingEnv.js", 
 			                              "myJS/navZ.js",
-										  "FlyingVehicle.js",
-										  "ParticleSystem.js",
 										  "Interpolators.js"]) ;
 			// Loads modules contained in includes and starts main function
 			ModulesLoader.loadModules(start) ;
@@ -39,9 +37,11 @@ function start()
 	//	Loading env
 	var Loader = new ThreeLoadingEnv();
 
-	/**
-	 * Corps de l'helico
-	 */
+	// car Position
+	var CARx = -220; 
+	var CARy = 0 ; 
+	var CARz = 0 ;
+	var CARtheta = 0 ; 
 
 	//	Helico
 	// helico Translation

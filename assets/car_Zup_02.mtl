@@ -2,7 +2,7 @@
 # File Created: 07.12.2014 18:24:58
 
 newmtl redCAR
-	Ns .0000
+	Ns 25.0000
 	Ni 1.5000
 	d 1.0000
 	Tr 0.0000
