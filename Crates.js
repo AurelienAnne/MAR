@@ -1,4 +1,4 @@
-const CRATE_SIZE = 5;
+const CRATE_SIZE = 6;
 const CRATES = [
     { 
         position: { x: -217, y: 107, z:0 },

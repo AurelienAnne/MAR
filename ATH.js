@@ -31,25 +31,31 @@ function ATH(Loader, renderingEnvironment) {
             document.getElementById("mainMenu").innerHTML = '<div style="text-align:center;">'
                 + '<h1 style="font-size: 36px;text-align:center;">MARace</h1>'
                 + '<p style="font-size: 24px;"><b>Jouer avec</b>'
-                + '<p><input type="radio" id="vehicle_car" name="vehicle">'
-                + '<label for="vehicle_car">Le vaisseau</label>'
-                + '<input type="radio" id="vehicle_helico" name="vehicle" checked>'
-                + '<label for="vehicle_helico">L\'hélico</label></p>'
+                + '<p><input type="radio" id="vehicle_helico" name="vehicle" checked>'
+                + '<label for="vehicle_helico">L\'hélico</label>'
+                + '<input type="radio" id="vehicle_car" name="vehicle">'
+                + '<label for="vehicle_car">Le vaisseau</label></p>'
                 + '<p><input type="checkbox" id="ghostEnabled" name="ghostEnabled" checked>'
                 + '<label for="ghostEnabled">Activer le fantôme</label></p>'
-                + '<p>Commandes :</p>'
-                + '<p>Avancer : Z</p>'
-                + '<p>Freiner : S</p>'
-                + '<p>Droite  : D</p>'
-                + '<p>Gauche  : Q</p>'
+                + '<p><input type="checkbox" id="musicEnabled" name="musicEnabled" checked>'
+                + '<label for="musicEnabled">Activer la musique</label></p>'
+                + '<p>Commandes :<br>'
+                + 'Avancer : Z<br>'
+                + 'Freiner : S<br>'
+                + 'Droite  : D<br>'
+                + 'Gauche  : Q<br>'
+                + 'Caméra  : P</p>'
                 + '<button style="font-size: 20px;" onClick="ath.MainMenu.submit()">Jouer</button>';
         },     
         submit : function () { 
-            changePlayerCar(document.getElementById("vehicle_helico").checked, Loader, renderingEnvironment);
             document.getElementById('mainMenu').style = 'display: none;';
 
             // Lancement du chargement du jeu avec les bons assets
-            start();
+            start({
+                helico: document.getElementById("vehicle_helico").checked,
+                ghost: document.getElementById("ghostEnabled").checked,
+                music: document.getElementById("musicEnabled").checked 
+            });
         }
     }
 

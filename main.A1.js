@@ -33,6 +33,13 @@ var momentVar = null;
 var hasChosenHelico = true;
 document.getElementById("audioMusic").volume = 0.3;
 document.getElementById("audioStarship").volume = 0.0;
+document.getElementById("audioHelico").volume = 0.0;
+
+var ghosts = [];
+var ghostEnabled = false; // Autorisé à courir (passe à true après le premier tour)
+var ghostAllowed; // Activer ou non par l'utilisateur depuis le menu
+var inputCurrentTurn = [];
+var currentGhostFrame = 0;
 
 function init(){
 	//	rendering env
@@ -51,7 +58,7 @@ function init(){
 /**
  * Appel de la fonction start dans le callback de ath.MainMenu.show();
  */
-function start()
+function start(config)
 {
 	//	----------------------------------------------------------------------------
 	//	MAR 2014 - nav test
@@ -70,8 +77,14 @@ function start()
 	var CARz = 0 ;
 	var CARtheta = 0 ;
 
+	ghostAllowed = config.ghost;
+	if(ghostAllowed) {
+		AIcar = new Vehicule(-220,-50,0,0,"AIcar", Loader, renderingEnvironment);
+	}
 
-	AIcar = new Vehicule(-220,-50,0,0,"AIcar", Loader, renderingEnvironment);
+	if(config.music) {
+		document.getElementById("audioMusic").play();
+	}
 
 	//	Meshes
 	Loader.loadMesh('assets','border_Zup_02','obj',	renderingEnvironment.scene,'border',	-340,-340,0,'front');
@@ -82,6 +95,24 @@ function start()
 
 	var crates = new Crates(renderingEnvironment.scene);
 	var camera = new Camera();
+
+	hasChosenHelico = config.helico;
+	if(hasChosenHelico){
+		playerCar = new Helico(-220,0,0,0,"PlayerCar", Loader, renderingEnvironment);
+		document.getElementById("audioHelico").play();
+	} else{
+		playerCar = new Vehicule(-220,0,0,0,"PlayerCar", Loader, renderingEnvironment);
+		document.getElementById("audioStarship").play();
+	}	
+
+	var carGeometry = playerCar.carGeometry;
+	carGeometry.position.z= +0.25 ;
+	// attach the scene camera to car
+	playerCar.carGeometry.add(renderingEnvironment.camera) ;
+	renderingEnvironment.camera.position.x = 0.0 ;
+	renderingEnvironment.camera.position.z = 10.0 ;
+	renderingEnvironment.camera.position.y = -10.0 ;
+	renderingEnvironment.camera.rotation.x = 85.0*3.14159/180.0 ;
 
 	//	Skybox
 	Loader.loadSkyBox('assets/maps',['px','nx','py','ny','pz','nz'],'jpg', renderingEnvironment.scene, 'sky',4000);
@@ -240,7 +271,7 @@ function start()
 		handleKeys();
 		
 		renderVehicule(playerCar);
-		renderAIvehicule();
+		//renderAIvehicule();
 		editInfos(NAV, playerCar.vehicle);
 
 //		renderingEnvironment.camera.rotation.z = vehicle.angles.z-Math.PI/2.0 ;
@@ -291,7 +322,8 @@ function start()
 			// Crates
 			const crate = crates.detectCrateCollision(NAV);
 			if (crate != undefined) {
-				ath.score += crate.pts;
+				ath.score += crate.pts;				
+				document.getElementById("audioCrate").play();
 			}
 			
 			// Laps
@@ -334,13 +366,9 @@ function start()
 }
 
 // Fantôme => Tour du fantôme = bestTour
-var ghosts = [];
-var ghostEnabled = false;
-var inputCurrentTurn = [];
-var currentGhostFrame = 0;
 
 function renderAIvehicule(NAV) {
-	if(ghostEnabled && ghosts[currentGhostFrame] != undefined) {
+	if(ghostAllowed && ghostEnabled && ghosts[currentGhostFrame] != undefined) {
 		var v = AIcar;
 		if (ghosts[currentGhostFrame].key == "U"){
 			v.vehicle.goFront(1200, 1200);
@@ -440,6 +468,7 @@ function editInfos(NAV, vehicle) {
 
 	const vehiculeVolume = getVehiculeSpeed(vehicle) / 100;
 	document.getElementById("audioStarship").volume = (vehiculeVolume > 1) ? 1.0 : vehiculeVolume;
+	document.getElementById("audioHelico").volume = (vehiculeVolume > 1) ? 1.0 : vehiculeVolume;
 
 	lastPlane = NAV.active;
 	
@@ -465,24 +494,6 @@ function showLaps() {
 
 function getVehiculeSpeed(vehicle) {
 	return Math.max(Math.abs(vehicle.speed.x), Math.abs(vehicle.speed.y), Math.abs(vehicle.speed.z)).toFixed(0);	
-}
-
-function changePlayerCar(helicoEnabled, Loader, renderingEnvironment) {
-	hasChosenHelico = helicoEnabled;
-	if(hasChosenHelico){
-		playerCar = new Helico(-220,0,0,0,"PlayerCar", Loader, renderingEnvironment);
-	} else{
-		playerCar = new Vehicule(-220,0,0,0,"PlayerCar", Loader, renderingEnvironment);
-	}	
-
-	var carGeometry = playerCar.carGeometry;
-	carGeometry.position.z= +0.25 ;
-	// attach the scene camera to car
-	playerCar.carGeometry.add(renderingEnvironment.camera) ;
-	renderingEnvironment.camera.position.x = 0.0 ;
-	renderingEnvironment.camera.position.z = 10.0 ;
-	renderingEnvironment.camera.position.y = -10.0 ;
-	renderingEnvironment.camera.rotation.x = 85.0*3.14159/180.0 ;
 }
 
 // Cheat mode
