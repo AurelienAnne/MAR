@@ -173,23 +173,23 @@ function Helico(initX, initY, initZ, Inittheta, name, Loader, renderingEnvironme
 
 	//	Helico Turbine Centrale
 	// helico Translation
-	var helicoTurbineC = new THREE.Object3D(); 
-	helicoTurbineC.name = 'helicoTurbineC'; 
-	this.carRotationZ.add(helicoTurbineC);
+	this.helicoTurbineC = new THREE.Object3D(); 
+	this.helicoTurbineC.name = 'helicoTurbineC'; 
+	this.carRotationZ.add(this.helicoTurbineC);
 	// initial POS
-	helicoTurbineC.position.x = 0;
-	helicoTurbineC.position.y = 0;
-	helicoTurbineC.position.z = 4;
-	helicoTurbineC.rotation.x = 90*Math.PI / 180;
+	this.helicoTurbineC.position.x = 0;
+	this.helicoTurbineC.position.y = 0;
+	this.helicoTurbineC.position.z = 4;
+	this.helicoTurbineC.rotation.x = 90*Math.PI / 180;
 	// the turbine itself 
 	// simple method to load an object
-	var turbineCGeometry = Loader.load({filename: 'assets/helico/turbine.obj', node: helicoTurbineC, name: 'turbineC'});
+	var turbineCGeometry = Loader.load({filename: 'assets/helico/turbine.obj', node: this.helicoTurbineC, name: 'turbineC'});
 
 	//	Helico Axe Central
 	// helico Translation
 	this.helicoAxeC =  new THREE.Object3D();
 	this.helicoAxeC.name = 'helicoAxeC'; 
-	helicoTurbineC.add(this.helicoAxeC);
+	this.helicoTurbineC.add(this.helicoAxeC);
 	// initial POS
 	this.helicoAxeC.position.x = 0; //0
 	this.helicoAxeC.position.y = 1; //0

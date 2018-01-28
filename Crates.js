@@ -1,27 +1,45 @@
-const CRATE_SIZE = 6;
+const CRATE_SIZE = 7;
 const CRATES = [
     { 
-        position: { x: -217, y: 107, z:0 },
-        rotation: { x: 0, y: 0, z:0 }, // Plane 2
+        position: { x: -240, y: 110, z:0 },
+        rotation: { x: 0, y: 0, z:0 }, // Plane 2 gauche
         userData: {
-            id: 1,
             pts: 20
         }
     }, 
     { 
-        position: { x: -170, y: 230, z:20 },
-        rotation: { x: 0, y: 0, z:0 }, // Plane 4
+        position: { x: -220, y: 110, z:0 },
+        rotation: { x: 0, y: 0, z:0 }, // Plane 2 milieu
         userData: {
-            id: 2,
+            pts: 20
+        }
+    }, 
+    { 
+        position: { x: -200, y: 110, z:0 },
+        rotation: { x: 0, y: 0, z:0 }, // Plane 2 droite
+        userData: {
+            pts: 20
+        }
+    }, 
+    { 
+        position: { x: -170, y: 220, z:20 },
+        rotation: { x: 0, y: 0, z:0 }, // Plane 4 gauche
+        userData: {
             pts: 30
         }
     }, 
     { 
-        position: { x: -188, y: 211, z:20 },
-        rotation: { x: 0, y: 0, z:0 }, // Plane 4
+        position: { x: -170, y: 240, z:20 },
+        rotation: { x: 0, y: 0, z:0 }, // Plane 4 droite
         userData: {
-            id: 3,
-            pts: 25
+            pts: 30
+        }
+    }, 
+    { 
+        position: { x: 140, y: 70, z:50 },
+        rotation: { x: 0, y: 14*Math.PI/180, z:0 }, // Plane 11
+        userData: {
+            pts: 15
         }
     }, 
 ];

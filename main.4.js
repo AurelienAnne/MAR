@@ -20,6 +20,10 @@ requirejs(['ModulesLoaderV2.js'], function()
 		}
 ) ;
 
+var particlesGenerators = [];
+var renderingEnvironment;
+var helico;
+
 function start()
 {
 	//	----------------------------------------------------------------------------
@@ -32,7 +36,7 @@ function start()
 	var currentlyPressedKeys = {};
 	
 	//	rendering env
-	var renderingEnvironment =  new ThreeRenderingEnv();
+	renderingEnvironment =  new ThreeRenderingEnv();
 
 	//	lighting env
 	var Lights = new ThreeLightingEnv('rembrandt','neutral','spot',renderingEnvironment,5000);
@@ -46,64 +50,8 @@ function start()
 	var CARz = 0 ;
 	var CARtheta = 0 ; 
 	
-	var helico = new Helico(CARx, CARy, CARz, CARtheta, "helico", Loader, renderingEnvironment);
-
-	/**
-	 * Particules
-	 */
-
-	 // TODO: Question 8 - 9
-	var particlesGenerators = [];
-
-	particlesGenerators.push(new ParticleSystem.Engine_Class({ 
-		textureFile: 'assets/particles/particle.png',
-		particlesCount: 10000,
-		blendingMode: THREE.AdditiveBlending
-	}));
-	particlesGenerators.push(new ParticleSystem.Engine_Class({ 
-		textureFile: 'assets/particles/particle.png',
-		particlesCount: 10000,
-		blendingMode: THREE.AdditiveBlending
-	}));
-
-	particlesGenerators[0].addEmitter(new ParticleSystem.ConeEmitter_Class({
-		cone: {
-			center: new THREE.Vector3(-8.5, 2, 4),
-			height: new THREE.Vector3(0,-1,0),
-			radius: 1,
-			flow: 1000
-		},
-		particle: {
-			speed: new MathExt.Interval_Class(5, 10),
-			mass: new MathExt.Interval_Class(0.1, 0.3),
-			size: new MathExt.Interval_Class(0.1, 1.0),
-			lifeTime: new MathExt.Interval_Class(1.0, 7.0)
-		}
-	}));
-
-	particlesGenerators[1].addEmitter(new ParticleSystem.ConeEmitter_Class({
-		cone: {
-			center: new THREE.Vector3(8.5, 2, 4),
-			height: new THREE.Vector3(0,-1,0),
-			radius: 1,
-			flow: 1000
-		},
-		particle: {
-			speed: new MathExt.Interval_Class(5, 10),
-			mass: new MathExt.Interval_Class(0.1, 0.3),
-			size: new MathExt.Interval_Class(0.1, 1.0),
-			lifeTime: new MathExt.Interval_Class(1.0, 7.0)
-		}
-	}));
-
-	particlesGenerators.forEach(gen => {		
-		gen.addModifier(new ParticleSystem.LifeTimeModifier_Class());
-		gen.addModifier(new ParticleSystem.ForceModifier_Weight_Class());
-		gen.addModifier(new ParticleSystem.PositionModifier_EulerItegration_Class());
-		gen.addModifier(new ParticleSystem.OpacityModifier_TimeToDeath_Class(new Interpolators.Linear_Class(0.9, 0.3)));
-		gen.addModifier(new ParticleSystem.ColorModifier_TimeToDeath_Class({ r: 77/255, g: 77/255, b: 0}, { r: 139/255, g: 0, b: 0}))
-		renderingEnvironment.addToScene(gen.particleSystem);
-	});	
+	helico = new Helico(CARx, CARy, CARz, CARtheta, "helico", Loader, renderingEnvironment);
+	createParticles();
 	
 	// Camera setup
 	renderingEnvironment.camera.position.x = 0 ;
@@ -153,9 +101,6 @@ function start()
 		{
 			helico.helicoTurbineD.rotation.z += 2*Math.PI/180;
 			helico.helicoTurbineG.rotation.z += 2*Math.PI/180;
-
-			particlesGenerators[1].emitters[0].center = 
-					(helico.helicoAxeD.position);
 		}
 		if (currentlyPressedKeys[69]) // (E) Down 
 		{
@@ -173,9 +118,12 @@ function start()
 	function render() { 
 		requestAnimationFrame( render );
 		handleKeys();
+
 		// Rendering
 		particlesGenerators.forEach(particlesSys => {
-			particlesSys.animate(0.5, renderingEnvironment.scene);
+			if(particlesSys.particleSystem.visible) {
+				particlesSys.animate(0.5, renderingEnvironment.scene);
+			}			
 		});
 		renderingEnvironment.renderer.render(renderingEnvironment.scene, renderingEnvironment.camera);
 
@@ -185,4 +133,74 @@ function start()
 	};
 
 	render(); 
+}
+
+function createParticles() {	
+	particlesGenerators = [];
+
+	const particleConfig = { 
+		textureFile: 'assets/particles/particle.png',
+		particlesCount: 10000,
+		blendingMode: THREE.AdditiveBlending
+	};
+
+	particlesGenerators.push(new ParticleSystem.Engine_Class(particleConfig)); // Turbine gauche
+	particlesGenerators.push(new ParticleSystem.Engine_Class(particleConfig)); // Turbine droite
+	particlesGenerators.push(new ParticleSystem.Engine_Class(particleConfig)); // Turbine haute
+
+	particlesGenerators[0].addEmitter(new ParticleSystem.ConeEmitterAttached_Class(helico.helicoTurbineG, {
+		cone: {
+			radius: 1,
+			flow: 1000
+		},
+		particle: {
+			speed: new MathExt.Interval_Class(5, 10),
+			mass: new MathExt.Interval_Class(0.1, 0.3),
+			size: new MathExt.Interval_Class(0.1, 1.0),
+			lifeTime: new MathExt.Interval_Class(1.0, 7.0)
+		}
+	}));
+
+	particlesGenerators[1].addEmitter(new ParticleSystem.ConeEmitterAttached_Class(helico.helicoTurbineD, {
+		cone: {
+			radius: 1,
+			flow: 1000
+		},
+		particle: {
+			speed: new MathExt.Interval_Class(5, 10),
+			mass: new MathExt.Interval_Class(0.1, 0.3),
+			size: new MathExt.Interval_Class(0.1, 1.0),
+			lifeTime: new MathExt.Interval_Class(1.0, 7.0)
+		}
+	}));
+
+	particlesGenerators[2].addEmitter(new ParticleSystem.ConeEmitterAttached_Class(helico.helicoTurbineC, {
+		cone: {
+			radius: 1,
+			flow: 1000
+		},
+		particle: {
+			speed: new MathExt.Interval_Class(5, 10),
+			mass: new MathExt.Interval_Class(0.1, 0.3),
+			size: new MathExt.Interval_Class(0.1, 1.0),
+			lifeTime: new MathExt.Interval_Class(1.0, 7.0)
+		}
+	}));
+
+	particlesGenerators.forEach(gen => {		
+		gen.addModifier(new ParticleSystem.LifeTimeModifier_Class());
+		gen.addModifier(new ParticleSystem.ForceModifier_Weight_Class());
+		gen.addModifier(new ParticleSystem.PositionModifier_EulerItegration_Class());
+		gen.addModifier(new ParticleSystem.OpacityModifier_TimeToDeath_Class(new Interpolators.Linear_Class(0.9, 0.3)));
+		gen.addModifier(new ParticleSystem.ColorModifier_TimeToDeath_Class({ r: 77/255, g: 77/255, b: 0}, { r: 139/255, g: 0, b: 0}))
+		renderingEnvironment.addToScene(gen.particleSystem);
+	});	
+
+	changeParticles();
+}
+
+function changeParticles() {
+	particlesGenerators[0].particleSystem.visible = document.getElementById("pleft").checked;	
+	particlesGenerators[1].particleSystem.visible = document.getElementById("pright").checked;	
+	particlesGenerators[2].particleSystem.visible = document.getElementById("pmiddle").checked;	
 }
