@@ -36,16 +36,18 @@ function ATH(Loader, renderingEnvironment) {
                 + '<input type="radio" id="vehicle_car" name="vehicle">'
                 + '<label for="vehicle_car">Le vaisseau</label></p>'
                 + '<p><input type="checkbox" id="ghostEnabled" name="ghostEnabled" checked>'
-                + '<label for="ghostEnabled">Activer le fantôme</label></p>'
-                + '<p><input type="checkbox" id="musicEnabled" name="musicEnabled" checked>'
-                + '<label for="musicEnabled">Activer la musique</label></p>'
+                + '<label for="ghostEnabled">Activer le fantôme</label><br>'
+                + '<input type="checkbox" id="musicEnabled" name="musicEnabled" checked>'
+                + '<label for="musicEnabled">Activer la musique</label><br>'
+                + '<input type="checkbox" id="particlesEnabled" name="particlesEnabled" checked>'
+                + '<label for="particlesEnabled">Activer les particules</label></p>'
                 + '<p>Commandes :<br>'
                 + 'Avancer : Z<br>'
                 + 'Freiner : S<br>'
                 + 'Droite  : D<br>'
                 + 'Gauche  : Q<br>'
                 + 'Caméra  : P</p>'
-                + '<button style="font-size: 20px;" onClick="ath.MainMenu.submit()">Jouer</button>';
+                + '<button style="font-size: 20px;" onClick="ath.MainMenu.submit()">Jouer</button></div>';
         },     
         submit : function () { 
             document.getElementById('mainMenu').style = 'display: none;';
@@ -54,7 +56,8 @@ function ATH(Loader, renderingEnvironment) {
             start({
                 helico: document.getElementById("vehicle_helico").checked,
                 ghost: document.getElementById("ghostEnabled").checked,
-                music: document.getElementById("musicEnabled").checked 
+                music: document.getElementById("musicEnabled").checked,
+                particles: document.getElementById("particlesEnabled").checked
             });
         }
     }
@@ -76,7 +79,6 @@ function ATH(Loader, renderingEnvironment) {
             + "Temps total : " + totalTime + "<br>"
             + "Meilleur tour : " + ((!bestTour)?"":bestTour) + "<br>"
             + this.showLaps() 
-            + "<label for=\"camera\">Changer camera</label><input type='text' enable=false value='P' size=2><br>"
             //+ "<br>Debug:<br> Vehicule pos : " + NAV.x.toFixed(1) + ", " + NAV.y.toFixed(1) + ", " + NAV.z.toFixed(1) + "<br>";
     }
 }

@@ -1,3 +1,5 @@
+var particlesGenerators = [];
+
 function Helico(initX, initY, initZ, Inittheta, name, Loader, renderingEnvironment)
 {
     // car Position
@@ -235,5 +237,81 @@ function Helico(initX, initY, initZ, Inittheta, name, Loader, renderingEnvironme
 	// the axe itself 
 	// simple method to load an object
 	var paleC3Geometry = Loader.load({filename: 'assets/helico/pale.obj', node: helicoPaleC3, name: 'paleC3'});
-    
+
+
+	// Particles
+	const particleConfig = { 
+		textureFile: 'assets/particles/particle.png',
+		particlesCount: 10000,
+		blendingMode: THREE.AdditiveBlending
+	};
+	this.particlesGenerators = [];
+
+	this.particlesGenerators.push(new ParticleSystem.Engine_Class(particleConfig)); // Turbine gauche
+	this.particlesGenerators.push(new ParticleSystem.Engine_Class(particleConfig)); // Turbine droite
+	this.particlesGenerators.push(new ParticleSystem.Engine_Class(particleConfig)); // Turbine haute
+
+	this.particlesGenerators[0].addEmitter(new ParticleSystem.ConeEmitterAttached_Class(this.carPosition, this.helicoTurbineG, this.carRotationZ.rotation.z, {
+		cone: {
+			radius: 1,
+			flow: 1000
+		},
+		particle: {
+			speed: new MathExt.Interval_Class(5, 10),
+			mass: new MathExt.Interval_Class(0.1, 0.3),
+			size: new MathExt.Interval_Class(0.1, 1.0),
+			lifeTime: new MathExt.Interval_Class(1.0, 7.0)
+		}
+	}));
+
+	this.particlesGenerators[1].addEmitter(new ParticleSystem.ConeEmitterAttached_Class(this.carPosition, this.helicoTurbineD, this.carRotationZ.rotation.z, {
+		cone: {
+			radius: 1,
+			flow: 1000
+		},
+		particle: {
+			speed: new MathExt.Interval_Class(5, 10),
+			mass: new MathExt.Interval_Class(0.1, 0.3),
+			size: new MathExt.Interval_Class(0.1, 1.0),
+			lifeTime: new MathExt.Interval_Class(1.0, 7.0)
+		}
+	}));
+
+	this.particlesGenerators[2].addEmitter(new ParticleSystem.ConeEmitterAttached_Class(this.carPosition, this.helicoTurbineC, this.carRotationZ.rotation.z, {
+		cone: {
+			position: this.carPosition.position.add(this.helicoTurbineC.position),
+			rotation: this.helicoTurbineC.rotation,
+			radius: 1,
+			flow: 1000
+		},
+		particle: {
+			speed: new MathExt.Interval_Class(5, 10),
+			mass: new MathExt.Interval_Class(0.1, 0.3),
+			size: new MathExt.Interval_Class(0.1, 1.0),
+			lifeTime: new MathExt.Interval_Class(1.0, 7.0)
+		}
+	}));
+
+	this.particlesGenerators.forEach(gen => {		
+		gen.addModifier(new ParticleSystem.LifeTimeModifier_Class());
+		gen.addModifier(new ParticleSystem.ForceModifier_Weight_Class());
+		gen.addModifier(new ParticleSystem.PositionModifier_EulerItegration_Class());
+		gen.addModifier(new ParticleSystem.OpacityModifier_TimeToDeath_Class(new Interpolators.Linear_Class(0.9, 0.3)));
+		gen.addModifier(new ParticleSystem.ColorModifier_TimeToDeath_Class({ r: 77/255, g: 77/255, b: 0}, { r: 139/255, g: 0, b: 0}))
+		renderingEnvironment.addToScene(gen.particleSystem);
+	});	
+	
+	this.renderParticles = function() {	
+		this.particlesGenerators.forEach(particlesSys => {
+			if(particlesSys.particleSystem.visible) {
+				particlesSys.animate(0.5, renderingEnvironment.scene);
+			}			
+		});
+	}
+
+	this.activeParticles = function(left, middle, right) {
+		this.particlesGenerators[0].particleSystem.visible = left;	
+		this.particlesGenerators[1].particleSystem.visible = right;	
+		this.particlesGenerators[2].particleSystem.visible = middle
+	}
 }

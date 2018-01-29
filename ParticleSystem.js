@@ -254,7 +254,7 @@ ParticleSystem.ConeEmitter_Class = function(configuration)
 	} ;
 } ;
 
-ParticleSystem.ConeEmitterAttached_Class = function(turbine, configuration)
+ParticleSystem.ConeEmitterAttached_Class = function(absoluteObject, attachedObject, rotationZ, configuration)
 {
 	// Tests requirements on configuration data structure
 	DebugHelper.requireAttribute(configuration, 'cone') &&
@@ -300,11 +300,14 @@ ParticleSystem.ConeEmitterAttached_Class = function(turbine, configuration)
 	this.createParticle = function()
 	{
 		var direction;
-		if(turbine.rotation.y != 0) {
+		if(attachedObject.rotation.y != 0) {
 			direction = new THREE.Vector3(0,0,-1) ; // Moteur central
 		}
 		else {
-			direction = new THREE.Vector3(turbine.rotation.z,-1,0) ; // Turbine latérale
+			// TODO : Sans doute quelque chose à faire ici pour faire tourner les particules avec l'hélico
+			// attachedObject est la turbine
+			// Le -1 est la direction à l'arrière de l'hélico où sont projetés les particules
+			direction = new THREE.Vector3(attachedObject.rotation.z, -1, 0) ; // Turbine latérale
 		}
 		direction.normalize() ;
 		
@@ -313,14 +316,13 @@ ParticleSystem.ConeEmitterAttached_Class = function(turbine, configuration)
 		directionNormal.normalize() ;
 
 		var mass = 0.1 ;
-		var initialPosition = new THREE.Vector3(turbine.position.x, turbine.position.y, turbine.position.z) ;
+		var initialPosition = new THREE.Vector3(absoluteObject.position.x + attachedObject.position.x, absoluteObject.position.y + attachedObject.position.y, absoluteObject.position.z + attachedObject.position.z) ;
 		var initialSpeed = direction.clone() ;
 		var modifier = directionNormal.clone() ;
 		modifier.applyAxisAngle(direction, Math.PI*2.0*Math.random()) ;
 		modifier.multiplyScalar(this.spread*Math.sqrt(Math.random())) ;
 		initialSpeed.add(modifier) ;
 		initialSpeed.normalize() ;
-		//initialSpeed.multiplyScalar(Math.random()*(this.speedInterval.max-this.speedInterval.min)+this.speedInterval.min) ;
 		initialSpeed.multiplyScalar(this.speedInterval.random()) ;
 		return this.instantiateParticle(initialPosition, initialSpeed, mass, this.sizeInterval.random(), this.lifeTimeInterval.random()) ;
 	} ;

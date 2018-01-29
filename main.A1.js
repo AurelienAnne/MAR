@@ -16,6 +16,8 @@ requirejs(['ModulesLoaderV2.js'], function()
 										  "Crates.js", 
 										  "Camera.js", 
 										  "ATH.js",
+										  "ParticleSystem.js",
+										  "Interpolators.js",
 										  "Helico.js" ]);
 			// Loads modules contained in includes and starts main function
 			ModulesLoader.loadModules(init);
@@ -40,6 +42,7 @@ var ghostEnabled = false; // Autorisé à courir (passe à true après le premie
 var ghostAllowed; // Activer ou non par l'utilisateur depuis le menu
 var inputCurrentTurn = [];
 var currentGhostFrame = 0;
+var particlesEnabled = true;
 
 function init(){
 	//	rendering env
@@ -77,6 +80,7 @@ function start(config)
 	var CARz = 0 ;
 	var CARtheta = 0 ;
 
+	particlesEnabled = config.particles;
 	ghostAllowed = config.ghost;
 	if(ghostAllowed) {
 		AIcar = new Vehicule(-220,-50,0,0,"AIcar", Loader, renderingEnvironment);
@@ -99,6 +103,8 @@ function start(config)
 	hasChosenHelico = config.helico;
 	if(hasChosenHelico){
 		playerCar = new Helico(-220,0,0,0,"PlayerCar", Loader, renderingEnvironment);
+		// On active les particules que sur la turbine du milieu car on ne voit pas les turbines latérales sur la caméra embarquée
+		playerCar.activeParticles(false, true, false); 
 		document.getElementById("audioHelico").play();
 	} else{
 		playerCar = new Vehicule(-220,0,0,0,"PlayerCar", Loader, renderingEnvironment);
@@ -269,15 +275,11 @@ function start(config)
 	function render() {
 		requestAnimationFrame( render );
 		handleKeys();
-		
+				
 		renderVehicule(playerCar);
-		//renderAIvehicule();
 		editInfos(NAV, playerCar.vehicle);
 
-//		renderingEnvironment.camera.rotation.z = vehicle.angles.z-Math.PI/2.0 ;
 		// Rendering
-		renderingEnvironment.renderer.render(renderingEnvironment.scene, renderingEnvironment.camera); 
-	
 		function renderVehicule(v){
 
 			// Vehicle stabilization 
@@ -358,6 +360,9 @@ function start(config)
 			document.getElementById("audioStarship").volume = (vehiculeVolume > 1) ? 1.0 : vehiculeVolume;			
 	
 			// Rendering
+			if(hasChosenHelico && particlesEnabled){				
+				playerCar.renderParticles();
+			}
 			renderingEnvironment.renderer.render(renderingEnvironment.scene, renderingEnvironment.camera); 
 		}
 	};
