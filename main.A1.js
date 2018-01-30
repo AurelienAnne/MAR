@@ -26,7 +26,8 @@ var playerCar;
 var AIcar;
 document.getElementById("audioMusic").volume = 0.3;
 document.getElementById("audioStarship").volume = 0.0;
-			
+	//	rendering env
+	var renderingEnvironment ;//=  new ThreeRenderingEnv();		
 function start()
 {
 	//	----------------------------------------------------------------------------
@@ -40,8 +41,7 @@ function start()
 	//	keyPressed
 	var currentlyPressedKeys = {};
 	
-	//	rendering env
-	var renderingEnvironment =  new ThreeRenderingEnv();
+	renderingEnvironment =  new ThreeRenderingEnv();		
 
 	//	lighting env
 	var Lights = new ThreeLightingEnv('rembrandt','neutral','spot',renderingEnvironment,5000);
@@ -51,7 +51,6 @@ function start()
 
 	playerCar = new Vehicule(-220,0,0,0,"PlayerCar", Loader, renderingEnvironment);
 	AIcar = new Vehicule(-220,-50,0,0,"AIcar", Loader, renderingEnvironment);
-
 
 	//	Meshes
 	Loader.loadMesh('assets','border_Zup_02','obj',	renderingEnvironment.scene,'border',	-340,-340,0,'front');
@@ -68,6 +67,7 @@ function start()
 
 
 	// attach the scene camera to car
+	renderingEnvironment.addToScene(playerCar.carPosition); 
 	playerCar.carGeometry.add(renderingEnvironment.camera) ;
 	renderingEnvironment.camera.position.x = 0.0 ;
 	renderingEnvironment.camera.position.z = 5.0 ;
@@ -162,7 +162,7 @@ function start()
 		if (currentlyPressedKeys[68]) // (D) Right
 		{
 			playerCar.vehicle.turnRight(1000) ;
-			saveGhostPosition(NAV, "R");
+			//saveGhostPosition(NAV, "R");
 			inputCurrentTurn.push({
 				"x": NAV.x,
 				"y": NAV.y,
@@ -173,7 +173,7 @@ function start()
 		if (currentlyPressedKeys[81]) // (Q) Left 
 		{		
 			playerCar.vehicle.turnLeft(1000) ;
-			saveGhostPosition(NAV, "L");
+			//saveGhostPosition(NAV, "L");
 			inputCurrentTurn.push({
 				"x": NAV.x,
 				"y": NAV.y,
@@ -191,7 +191,7 @@ function start()
 				"key": "U"
 			});
 			
-			saveGhostPosition(NAV, "U");
+			//saveGhostPosition(NAV, "U");
 			if(startRaceTime == undefined) {
 				startRaceTime = moment();
 			}
@@ -205,7 +205,7 @@ function start()
 				"z": NAV.z,
 				"key": "D"
 			});
-			saveGhostPosition(NAV, "D");
+			//saveGhostPosition(NAV, "D");
 		}
 		if(currentlyPressedKeys[72]) { // (H) Hack 
 			nextLap(NAV);
@@ -295,7 +295,7 @@ function start()
 			totalTime = moment(momentVar.diff(startRaceTime)).format("m:ss.SSS")
 			ath.update(NAV, playerCar.vehicle, nbLap);
 		
-			saveGhostPosition(NAV);	
+			//saveGhostPosition(NAV);	
 			renderAIvehicule();
 		
 			// Sound
@@ -318,48 +318,59 @@ var inputCurrentTurn = [];
 var currentGhostFrame = 0;
 
 function renderAIvehicule(NAV) {
-	if(ghostEnabled && ghosts[currentGhostFrame] != undefined) {
-		var v = AIcar;
+	// TODO 
+	// Ajouter les input au ghost
+	// Si fin du tour joueur -> stocker la liste et clean la liste tourCourant
+	if(ghostEnabled ){//&& ghosts[currentGhostFrame] != undefined) {
+		
+		if(nbTour == 1){
+			renderingEnvironment.addToScene(AIcar.carPosition);
+			if(ghosts.best != null)
+			ghosts = ghosts.best;
+		}
+			
+		
 		if (ghosts[currentGhostFrame].key == "U"){
-			v.vehicle.goFront(1200, 1200);
+			AIcar.vehicle.goFront(1200, 1200);
 		}
 		if (ghosts[currentGhostFrame].key == "D"){
-			v.vehicle.brake(100);
+			AIcar.vehicle.brake(100);
 		}
 		if (ghosts[currentGhostFrame].key == "R"){
-			v.vehicle.turnRight(1000) ;
+			AIcar.vehicle.turnRight(1000) ;
 		}
 		if (ghosts[currentGhostFrame].key == "L"){
-			v.vehicle.turnLeft(1000) ;
+			AIcar.vehicle.turnLeft(1000) ;
 		}
 		var aiCarVehicule = AIcar.vehicle;
 
 		// Vehicle stabilization 
-		v.vehicle.goUp(v.vehicle.weight()/4.0, v.vehicle.weight()/4.0, v.vehicle.weight()/4.0, v.vehicle.weight()/4.0) ;
-		v.vehicle.stopAngularSpeedsXY() ;
-		v.vehicle.stabilizeSkid(50) ; 
-		v.vehicle.stabilizeTurn(1000) ;
-		var oldPosition = v.vehicle.position.clone() ;
-		v.vehicle.update(1.0/60) ;
-		var newPosition = v.vehicle.position.clone() ;
+		AIcar.vehicle.goUp(AIcar.vehicle.weight()/4.0, AIcar.vehicle.weight()/4.0, AIcar.vehicle.weight()/4.0, AIcar.vehicle.weight()/4.0) ;
+		AIcar.vehicle.stopAngularSpeedsXY() ;
+		AIcar.vehicle.stabilizeSkid(50) ; 
+		AIcar.vehicle.stabilizeTurn(1000) ;
+		var oldPosition = AIcar.vehicle.position.clone() ;
+		AIcar.vehicle.update(1.0/60) ;
+		var newPosition = AIcar.vehicle.position.clone() ;
 		newPosition.sub(oldPosition) ;
 		
 		// NAV
 		// NAV.move(newPosition.x, newPosition.y, 150,10) ;
 		// carPosition
-		v.carPosition.position.set(ghosts[currentGhostFrame].x, ghosts[currentGhostFrame].y, ghosts[currentGhostFrame].z) ;
+		AIcar.carPosition.position.set(ghosts[currentGhostFrame].x, ghosts[currentGhostFrame].y, ghosts[currentGhostFrame].z) ;
 		// Updates the vehicle
-		v.vehicle.position.x = ghosts[currentGhostFrame].x ;
-		v.vehicle.position.y = ghosts[currentGhostFrame].y ;
+		AIcar.vehicle.position.x = ghosts[currentGhostFrame].x ;
+		AIcar.vehicle.position.y = ghosts[currentGhostFrame].y ;
 		// Updates carFloorSlopefunction
-		v.carFloorSlope.matrixAutoUpdate = false;		
-		//v.carFloorSlope.matrix.copy(NAV.localMatrix(v.CARx, v.CARy));					
+		AIcar.carFloorSlope.matrixAutoUpdate = false;		
+		//AIcar.carFloorSlope.matrix.copy(NAV.localMatrix(AIcar.CARx, AIcar.CARy));					
 
 		// Updates carRotationZ
-		v.carRotationZ.rotation.z = v.vehicle.angles.z-Math.PI/2.0 ;
+		AIcar.carRotationZ.rotation.z = AIcar.vehicle.angles.z-Math.PI/2.0 ;
 		currentGhostFrame++;
 		if(currentGhostFrame >= ghosts.length){
 			currentGhostFrame = 0;
+			AIcar.resetZRotation();
 			if(ghosts.best != null)
 				ghosts = ghosts.best;
 		}
@@ -456,14 +467,14 @@ function nextLap(NAV) {
 }
 
 // Ghost
-function saveGhostPosition(NAV, key) {
-	ghosts.push({
+//function saveGhostPosition(NAV, key) {
+	/*ghosts.push({
 		"x": NAV.x,
 		"y": NAV.y,
 		"z": NAV.z,
 		"key": key
-	});
-}
+	});*/
+//}
 
 // Caméra
 function switchCamera(NAV, camera, vehicle){

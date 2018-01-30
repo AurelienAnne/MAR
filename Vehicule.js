@@ -17,7 +17,7 @@ function Vehicule(initX, initY, initZ, Inittheta, name, Loader, renderingEnviron
 	// car Translation
 	this.carPosition = new THREE.Object3D(); 
 	this.carPosition.name = name + 'car0'; 
-	renderingEnvironment.addToScene(this.carPosition); 
+	//renderingEnvironment.addToScene(this.carPosition); 
 	// initial POS
 	this.carPosition.position.x = this.CARx;
 	this.carPosition.position.y = this.CARy;
@@ -37,6 +37,10 @@ function Vehicule(initX, initY, initZ, Inittheta, name, Loader, renderingEnviron
     this.carGeometry.position.z= +0.25 ; 
     this.carFloorSlope = new THREE.Object3D(); 
 	this.carFloorSlope.name = name + 'car1';
-    this.carPosition.add(this.carFloorSlope);
+	this.carPosition.add(this.carFloorSlope);
+	
+	this.resetZRotation = function(){
+		this.carRotationZ.rotation.z = 0 ;
+	}
     
 }
