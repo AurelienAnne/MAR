@@ -29,6 +29,10 @@ var renderingEnvironment;
 var Lights;
 var Loader;
 
+var trajetHelico;
+var posOnTrajet = 0;
+var helicoJournalistes;
+
 var startRaceTime = undefined;
 var actualTour = null;
 var momentVar = null;
@@ -170,6 +174,34 @@ function start(config)
 	document.onkeydown = handleKeyDown;
 	document.onkeyup = handleKeyUp;
 
+	/**
+	 * Bezier Curve
+	 */
+
+	var curve = new THREE.CubicBezierCurve3(
+		new THREE.Vector3( -150, 0, 200 ),
+		new THREE.Vector3( -150, 200,200 ),
+		new THREE.Vector3( 150, 200, 200 ),
+		new THREE.Vector3( 150, 0, 200 )
+	);
+
+	var curve2 = new THREE.CubicBezierCurve3(
+		new THREE.Vector3( 150, 0, 200 ),
+		new THREE.Vector3( 150, -200, 200 ),
+		new THREE.Vector3( -150, -200, 200 ),
+		new THREE.Vector3( -150, 0, 200 )
+	);
+	
+	
+	trajetHelico = new THREE.Geometry();
+	trajetHelico.vertices = curve.getPoints( 500 ).concat(curve2.getPoints( 500 ));
+
+	if(hasChosenHelico){
+		helicoJournalistes = new Vehicule(-150,0,200,0,"helico", Loader, renderingEnvironment);
+	}else{
+		helicoJournalistes = new Helico(-150,0,200,0,"helico", Loader, renderingEnvironment);
+	}
+
 	//	callback functions
 	//	---------------------------------------------------------------------------
 	function handleKeyDown(event) { 
@@ -278,6 +310,21 @@ function start(config)
 				
 		renderVehicule(playerCar);
 		editInfos(NAV, playerCar.vehicle);
+
+		/**
+		 * Helico sur la courbe de Bezier
+		 */
+
+		var pos = trajetHelico.vertices[(posOnTrajet++)%1000];	
+
+		helicoJournalistes.vehicle.position.set(pos.x, pos.y, pos.z) ;
+		// Updates the vehicle
+		helicoJournalistes.carPosition.position.set(pos.x, pos.y, pos.z) ;
+		helicoJournalistes.vehicle.position.x = pos.x ;
+		helicoJournalistes.vehicle.position.y = pos.y ;
+		helicoJournalistes.carFloorSlope.matrixAutoUpdate = false;
+
+		helicoJournalistes.carRotationZ.rotation.z -= 0.36*Math.PI/180;
 
 		// Rendering
 		function renderVehicule(v){
