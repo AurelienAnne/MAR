@@ -3,20 +3,30 @@ function Camera() {
     var onboard = true;
 
     this.switch = function (NAV, camera, vehicle, carGeometry) {
-        if (onboard) {
+        if (onboard) { // On passe sur les caméras circuit
+            onboard = false;            
             carGeometry.remove(camera);
             this.update(NAV, camera, vehicle);
+
+            if(hasChosenHelico) {
+                playerCar.activeParticles(true, true, true);
+            }
         }
-        else {
+        else { // On passe en caméra embarquée
             carGeometry.add(camera) ;
             camera.position.x = 0.0 ;
-            camera.position.z = 5.0 ;
-            camera.position.y = 0.0 ;
+            camera.position.z = 10.0 ;
+            camera.position.y = -10.0 ;
             camera.rotation.x = 85.0 * Math.PI/180.0 ;
             camera.rotation.y = 0 * Math.PI/180.0 ;
             camera.rotation.z = 0.0 * Math.PI/180.0 ;
-        }
-        onboard = !onboard;
+            onboard = true;
+
+            if(hasChosenHelico) {
+                // On active les particules que sur la turbine du milieu car on ne voit pas les turbines latérales sur la caméra embarquée
+                playerCar.activeParticles(false, true, false); 
+            }
+        }        
     };
     
     this.update = function (NAV, camera, vehicle){

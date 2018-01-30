@@ -15,20 +15,57 @@ requirejs(['ModulesLoaderV2.js'], function()
 										  "FlyingVehicle.js", 
 										  "Crates.js", 
 										  "Camera.js", 
-										  "ATH.js" ]);
+										  "ATH.js",
+										  "ParticleSystem.js",
+										  "Interpolators.js",
+										  "Helico.js" ]);
 			// Loads modules contained in includes and starts main function
-			ModulesLoader.loadModules(start) ;
+			ModulesLoader.loadModules(init);
+			//ModulesLoader.loadModules(start) ;
 		}
 ) ;
 
+var renderingEnvironment;
+var Lights;
+var Loader;
+
+var trajetHelico;
+var posOnTrajet = 0;
+var helicoJournalistes;
+
 var startRaceTime = undefined;
-var playerCar;
-var AIcar;
+var actualTour = null;
+var momentVar = null;
+var hasChosenHelico = true;
 document.getElementById("audioMusic").volume = 0.3;
 document.getElementById("audioStarship").volume = 0.0;
+document.getElementById("audioHelico").volume = 0.0;
+
+var ghosts = [];
+var ghostEnabled = false; // Autorisé à courir (passe à true après le premier tour)
+var ghostAllowed; // Activer ou non par l'utilisateur depuis le menu
+var inputCurrentTurn = [];
+var currentGhostFrame = 0;
+var particlesEnabled = true;
+
+function init(){
 	//	rendering env
-	var renderingEnvironment ;//=  new ThreeRenderingEnv();		
-function start()
+	renderingEnvironment =  new ThreeRenderingEnv();
+
+	//	lighting env
+	Lights = new ThreeLightingEnv('rembrandt','neutral','spot',renderingEnvironment,5000);
+
+	//	Loading env
+	Loader = new ThreeLoadingEnv();
+	
+	ath = new ATH(Loader, renderingEnvironment);
+	ath.MainMenu.show();
+}
+
+/**
+ * Appel de la fonction start dans le callback de ath.MainMenu.show();
+ */
+function start(config)
 {
 	//	----------------------------------------------------------------------------
 	//	MAR 2014 - nav test
@@ -41,16 +78,17 @@ function start()
 	//	keyPressed
 	var currentlyPressedKeys = {};
 	
-	renderingEnvironment =  new ThreeRenderingEnv();		
+	
 
-	//	lighting env
-	var Lights = new ThreeLightingEnv('rembrandt','neutral','spot',renderingEnvironment,5000);
+	particlesEnabled = config.particles;
+	ghostAllowed = config.ghost;
+	if(ghostAllowed) {
+		AIcar = new Vehicule(-220,-50,0,0,"AIcar", Loader, renderingEnvironment);
+	}
 
-	//	Loading env
-	var Loader = new ThreeLoadingEnv();
-
-	playerCar = new Vehicule(-220,0,0,0,"PlayerCar", Loader, renderingEnvironment);
-	AIcar = new Vehicule(-220,-50,0,0,"AIcar", Loader, renderingEnvironment);
+	if(config.music) {
+		document.getElementById("audioMusic").play();
+	}
 
 	//	Meshes
 	Loader.loadMesh('assets','border_Zup_02','obj',	renderingEnvironment.scene,'border',	-340,-340,0,'front');
@@ -58,22 +96,30 @@ function start()
 	Loader.loadMesh('assets','circuit_Zup_02','obj',renderingEnvironment.scene,'circuit',	-340,-340,0,'front');
 	//Loader.loadMesh('assets','tree_Zup_02','obj',	renderingEnvironment.scene,'trees',	-340,-340,0,'double');
 	Loader.loadMesh('assets','arrivee_Zup_01','obj',	renderingEnvironment.scene,'decors',	-340,-340,0,'front');
-		
-
 
 	var crates = new Crates(renderingEnvironment.scene);
 	var camera = new Camera();
-	ath = new ATH();
 
+	hasChosenHelico = config.helico;
+	if(hasChosenHelico){
+		playerCar = new Helico(-220,0,0,0,"PlayerCar", Loader, renderingEnvironment);
+		// On active les particules que sur la turbine du milieu car on ne voit pas les turbines latérales sur la caméra embarquée
+		playerCar.activeParticles(false, true, false); 
+		document.getElementById("audioHelico").play();
+	} else{
+		playerCar = new Vehicule(-220,0,0,0,"PlayerCar", Loader, renderingEnvironment);
+		document.getElementById("audioStarship").play();
+	}	
 
+	var carGeometry = playerCar.carGeometry;
+	carGeometry.position.z= +0.25 ;
 	// attach the scene camera to car
 	renderingEnvironment.addToScene(playerCar.carPosition); 
 	playerCar.carGeometry.add(renderingEnvironment.camera) ;
 	renderingEnvironment.camera.position.x = 0.0 ;
-	renderingEnvironment.camera.position.z = 5.0 ;
-	renderingEnvironment.camera.position.y = 0.0 ;
+	renderingEnvironment.camera.position.z = 10.0 ;
+	renderingEnvironment.camera.position.y = -10.0 ;
 	renderingEnvironment.camera.rotation.x = 85.0*3.14159/180.0 ;
-	embarque = true;
 
 	//	Skybox
 	Loader.loadSkyBox('assets/maps',['px','nx','py','ny','pz','nz'],'jpg', renderingEnvironment.scene, 'sky',4000);
@@ -124,8 +170,34 @@ function start()
 	//	keyboard callbacks 
 	document.onkeydown = handleKeyDown;
 	document.onkeyup = handleKeyUp;
+
+	/**
+	 * Bezier Curve
+	 */
+
+	var curve = new THREE.CubicBezierCurve3(
+		new THREE.Vector3( -150, 0, 200 ),
+		new THREE.Vector3( -150, 200,200 ),
+		new THREE.Vector3( 150, 200, 200 ),
+		new THREE.Vector3( 150, 0, 200 )
+	);
+
+	var curve2 = new THREE.CubicBezierCurve3(
+		new THREE.Vector3( 150, 0, 200 ),
+		new THREE.Vector3( 150, -200, 200 ),
+		new THREE.Vector3( -150, -200, 200 ),
+		new THREE.Vector3( -150, 0, 200 )
+	);
 	
 	
+	trajetHelico = new THREE.Geometry();
+	trajetHelico.vertices = curve.getPoints( 500 ).concat(curve2.getPoints( 500 ));
+
+	if(hasChosenHelico){
+		helicoJournalistes = new Vehicule(-150,0,200,0,"helico", Loader, renderingEnvironment);
+	}else{
+		helicoJournalistes = new Helico(-150,0,200,0,"helico", Loader, renderingEnvironment);
+	}
 
 	//	callback functions
 	//	---------------------------------------------------------------------------
@@ -133,20 +205,7 @@ function start()
 		currentlyPressedKeys[event.keyCode] = true;
 		if (event.keyCode == 80) // (P) Down 
 		{
-			if(embarque){
-				embarque = false;
-				playerCar.carGeometry.remove(renderingEnvironment.camera);
-				switchCamera(NAV, renderingEnvironment.camera, playerCar.vehicle);
-			}else{
-				embarque = true;
-				playerCar.carGeometry.add(renderingEnvironment.camera) ;
-				renderingEnvironment.camera.position.x = 0.0 ;
-				renderingEnvironment.camera.position.z = 5.0 ;
-				renderingEnvironment.camera.position.y = 0.0 ;
-				renderingEnvironment.camera.rotation.x = 85.0 * Math.PI/180.0 ;
-				renderingEnvironment.camera.rotation.y = 0 * Math.PI/180.0 ;
-				renderingEnvironment.camera.rotation.z = 0.0 * Math.PI/180.0 ;
-			}
+			camera.switch(NAV, renderingEnvironment.camera, playerCar, carGeometry);
 		}
 	}
 	function handleKeyUp(event) {currentlyPressedKeys[event.keyCode] = false;}
@@ -169,6 +228,13 @@ function start()
 				"z": NAV.z,
 				"key": "R"
 			});
+
+			if(hasChosenHelico){
+				if(playerCar.helicoTurbineD.rotation.z > -30*Math.PI/180){
+					playerCar.helicoTurbineD.rotation.z += -2*Math.PI/180;
+					playerCar.helicoTurbineG.rotation.z += -2*Math.PI/180;
+				}
+			}
 		}
 		if (currentlyPressedKeys[81]) // (Q) Left 
 		{		
@@ -180,6 +246,13 @@ function start()
 				"z": NAV.z,
 				"key": "L"
 			});
+
+			if(hasChosenHelico){
+				if(playerCar.helicoTurbineD.rotation.z < 30*Math.PI/180){
+					playerCar.helicoTurbineD.rotation.z += 2*Math.PI/180;
+					playerCar.helicoTurbineG.rotation.z += 2*Math.PI/180;
+				}
+			}
 		}
 		if (currentlyPressedKeys[90]) // (Z) Up
 		{
@@ -194,6 +267,16 @@ function start()
 			//saveGhostPosition(NAV, "U");
 			if(startRaceTime == undefined) {
 				startRaceTime = moment();
+			}
+
+			if(hasChosenHelico){
+				if(playerCar.helicoTurbineD.rotation.z > 0){
+					playerCar.helicoTurbineD.rotation.z += -1*Math.PI/180;
+					playerCar.helicoTurbineG.rotation.z += -1*Math.PI/180;
+				}else if(playerCar.helicoTurbineD.rotation.z < 0){
+					playerCar.helicoTurbineD.rotation.z += 1*Math.PI/180;
+					playerCar.helicoTurbineG.rotation.z += 1*Math.PI/180;
+				}
 			}
 		}
 		if (currentlyPressedKeys[83]) // (S) Down 
@@ -221,23 +304,34 @@ function start()
 	function render() {
 		requestAnimationFrame( render );
 		handleKeys();
-		
+				
 		renderVehicule(playerCar);
-		renderAIvehicule();
-		// Camera
-		switchCamera(NAV, renderingEnvironment.camera, playerCar.vehicle);
 		editInfos(NAV, playerCar.vehicle);
 
-//		renderingEnvironment.camera.rotation.z = vehicle.angles.z-Math.PI/2.0 ;
+		/**
+		 * Helico sur la courbe de Bezier
+		 */
+
+		var pos = trajetHelico.vertices[(posOnTrajet++)%1000];	
+
+		helicoJournalistes.vehicle.position.set(pos.x, pos.y, pos.z) ;
+		// Updates the vehicle
+		helicoJournalistes.carPosition.position.set(pos.x, pos.y, pos.z) ;
+		helicoJournalistes.vehicle.position.x = pos.x ;
+		helicoJournalistes.vehicle.position.y = pos.y ;
+		helicoJournalistes.carFloorSlope.matrixAutoUpdate = false;
+
+		helicoJournalistes.carRotationZ.rotation.z -= 0.36*Math.PI/180;
+
 		// Rendering
-		renderingEnvironment.renderer.render(renderingEnvironment.scene, renderingEnvironment.camera); 
-	
 		function renderVehicule(v){
+
 			// Vehicle stabilization 
 			v.vehicle.goUp(v.vehicle.weight()/4.0, v.vehicle.weight()/4.0, v.vehicle.weight()/4.0, v.vehicle.weight()/4.0) ;
 			v.vehicle.stopAngularSpeedsXY() ;
 			v.vehicle.stabilizeSkid(50) ; 
 			v.vehicle.stabilizeTurn(1000) ;
+			
 			var oldPosition = v.vehicle.position.clone() ;
 			v.vehicle.update(1.0/60) ;
 			var newPosition = v.vehicle.position.clone() ;
@@ -253,13 +347,19 @@ function start()
 			// Updates carFloorSlope
 			v.carFloorSlope.matrixAutoUpdate = false;		
 			v.carFloorSlope.matrix.copy(NAV.localMatrix(v.CARx, v.CARy));
-						
+			
+			// Helico pales
+			if(hasChosenHelico){
+				v.helicoAxeC.rotation.y += (v.vehicle.getVehiculeSpeed()/5)*Math.PI/180;
+				v.helicoAxeG.rotation.y += (v.vehicle.getVehiculeSpeed()/5)*Math.PI/180;
+				v.helicoAxeD.rotation.y += (v.vehicle.getVehiculeSpeed()/5)*Math.PI/180;
+			}
 			
 			// Updates carRotationZ
 			v.carRotationZ.rotation.z = v.vehicle.angles.z-Math.PI/2.0 ;
 		}
 
-		if (nbLap == 5) {
+		if (nbLap >= 5) {
 			ath.showEnd();
 		} else {
 			// Camera
@@ -268,7 +368,8 @@ function start()
 			// Crates
 			const crate = crates.detectCrateCollision(NAV);
 			if (crate != undefined) {
-				ath.score += crate.pts;
+				ath.score += crate.pts;				
+				document.getElementById("audioCrate").play();
 			}
 			
 			// Laps
@@ -303,27 +404,22 @@ function start()
 			document.getElementById("audioStarship").volume = (vehiculeVolume > 1) ? 1.0 : vehiculeVolume;			
 	
 			// Rendering
+			if(hasChosenHelico && particlesEnabled){				
+				playerCar.renderParticles();
+			}
 			renderingEnvironment.renderer.render(renderingEnvironment.scene, renderingEnvironment.camera); 
-	}
+		}
 	};
-
 
 	render();
 }
 
 // Fantôme => Tour du fantôme = bestTour
-var ghosts = [];
-var ghostEnabled = false;
-var inputCurrentTurn = [];
-var currentGhostFrame = 0;
 
 function renderAIvehicule(NAV) {
-	// TODO 
-	// Ajouter les input au ghost
-	// Si fin du tour joueur -> stocker la liste et clean la liste tourCourant
 	if(ghostEnabled ){//&& ghosts[currentGhostFrame] != undefined) {
 		
-		if(nbTour == 1){
+		if(nbLap == 1){
 			renderingEnvironment.addToScene(AIcar.carPosition);
 			if(ghosts.best != null)
 			ghosts = ghosts.best;
@@ -379,7 +475,6 @@ function renderAIvehicule(NAV) {
 }
 
 // Gestion des tours
-var nbTour = 0;
 var nbLap = 0;
 var bestTurn = 0;
 var bestTour = null;
@@ -399,26 +494,26 @@ function editInfos(NAV, vehicle) {
 		laps.push(momentVar);
 		if(!bestTour){
 			bestTour = moment(momentVar.diff(startRaceTime)).format("m:ss.SSS");
-			bestTurn = nbTour;
+			bestTurn = nbLap;
 			ghosts.best = inputCurrentTurn;
 		}
 		else{
 			actualTour = moment(momentVar.diff(laps[laps.length-2])).format("m:ss.SSS");
 			if(actualTour < bestTour){
 				bestTour = actualTour;				
-				bestTurn = nbTour;
+				bestTurn = nbLap;
 				ghosts.best = inputCurrentTurn;
 			}
 				
 		}
-		nbTour++;
+		nbLap++;
 		inputCurrentTurn = [];
 		checkpoint15 = false;
 		ghostEnabled = true;
 	}
 
 	document.getElementById("infos").innerHTML = "Vitesse : " + getVehiculeSpeed(vehicle) + "<br>"
-		+ "Tour : " + (nbTour+1) + "<br>" 
+		+ "Tour : " + (nbLap+1) + "<br>" 
 		+ "Temps total : " + moment(moment().diff(startRaceTime)).format("m:ss.SSS") + "<br>"
 		+ "Meilleur temps : " + ((!bestTour)?"":bestTour) + " au tour n°"+ (bestTurn+1)+"<br>"
 		+ showLaps() 
@@ -430,6 +525,7 @@ function editInfos(NAV, vehicle) {
 
 	const vehiculeVolume = getVehiculeSpeed(vehicle) / 100;
 	document.getElementById("audioStarship").volume = (vehiculeVolume > 1) ? 1.0 : vehiculeVolume;
+	document.getElementById("audioHelico").volume = (vehiculeVolume > 1) ? 1.0 : vehiculeVolume;
 
 	lastPlane = NAV.active;
 	
@@ -473,115 +569,6 @@ function nextLap(NAV) {
 		"y": NAV.y,
 		"z": NAV.z,
 		"key": key
-	});*/
-//}
+	});
+}*/
 
-// Caméra
-function switchCamera(NAV, camera, vehicle){
-	if(!embarque){
-		switch(NAV.active) {
-			case "0":
-			case "1":
-				camera.lookAt(NAV);
-				camera.position.x = -220;
-				camera.position.y = -150 ;
-				camera.position.z = 70;
-				camera.rotation.x = 70.0 * Math.PI/180.0;
-				camera.rotation.z = 0.0 * Math.PI/180.0;
-				break;
-			case "2":
-			case "3":
-			case "4":
-				camera.lookAt(NAV);
-				camera.position.x = -250 ;
-				camera.position.y = 260 ;
-				camera.position.z = NAV.z+40;
-				camera.rotation.x = -60.0 * Math.PI/180.0;
-				camera.rotation.z = -165.0 * Math.PI/180.0;
-				break;
-			case "5":
-			case "6":
-			case "7":
-				camera.lookAt(NAV);
-				camera.position.x = -80;
-				camera.position.y = 260 ;
-				camera.position.z = NAV.z+40;
-				camera.rotation.x = -60.0 * Math.PI/180.0;
-				camera.rotation.z = -165.0 * Math.PI/180.0;
-				break;
-			case "8":
-			case "9":
-			case "10":
-				camera.lookAt(NAV);
-				camera.position.x = 30;
-				camera.position.y = 50 ;
-				camera.position.z = 80;
-				camera.rotation.x = 90.0 * Math.PI/180.0;
-				camera.rotation.z = 0.0 * Math.PI/180.0;
-				break;
-			case "11":
-			case "12":
-			case "13":
-			case "14":
-				camera.lookAt(NAV);
-				camera.position.x = 230;
-				camera.position.y = 100 ;
-				camera.position.z = 80;
-				camera.rotation.x = 290.0 * Math.PI/180.0;
-				camera.rotation.z = 180.0 * Math.PI/180.0;
-				break;
-			case "15":
-			case "16":
-			case "17":
-				camera.lookAt(NAV);
-				camera.position.x = 270;
-				camera.position.y = -200 ;
-				camera.position.z = 80;
-				camera.rotation.x = 90.0 * Math.PI/180.0;
-				camera.rotation.z = 0.0 * Math.PI/180.0;
-				break;
-			case "18":
-			case "19":
-			case "20":
-				camera.lookAt(NAV);
-				camera.position.x = 50;
-				camera.position.y = -300 ;
-				camera.position.z = 100;
-				camera.rotation.x = 90.0 * Math.PI/180.0;
-				camera.rotation.z = 0.0 * Math.PI/180.0;
-				break;
-			case "21":
-			case "22":
-			case "23":
-			case "24":
-			case "25":
-				camera.lookAt(NAV);
-				camera.position.x = -40;
-				camera.position.y = 20 ;
-				camera.position.z = 160;
-				camera.rotation.x = 290.0 * Math.PI/180.0;
-				camera.rotation.z = 180.0 * Math.PI/180.0;
-				break;
-			case "26":
-			case "27":
-			case "28":
-			case "29":
-			case "30":
-				camera.lookAt(NAV);
-				camera.position.x = -180;
-				camera.position.y = -330 ;
-				camera.position.z = 100;
-				camera.rotation.x = 70.0 * Math.PI/180.0;
-				camera.rotation.z = 0.0 * Math.PI/180.0;
-				break;
-			default:
-				camera.lookAt(NAV);
-				camera.position.x = NAV.x ;
-				camera.position.y = NAV.y ;
-				camera.position.z = NAV.z+50+vehicle.speed.length()*2 ;
-				camera.rotation.x = 0.0 * Math.PI/180.0;
-				camera.rotation.z = 0.0 * Math.PI/180.0;
-				break;
-    	}
-	}
-}

@@ -6,6 +6,18 @@
 		<style> body { margin: 0; } canvas { width: 100%; height: 100% } </style> 
 	</head> 
 	<body>
+		<p onClick="helico.activeParticles(document.getElementById('pleft').checked, document.getElementById('pmiddle').checked, document.getElementById('pright').checked,)" 
+		style="position: absolute; margin-top: 10px;margin-left: 10px;font-family: Arial; color: white;background-color:rgba(128, 128, 128, .7);padding:4px;">
+			Démo hélicoptère et particules <i>Aurélien ANNE, Marie COISNARD, Kevin SALMON</i><br>
+			Activer les particules sur les turbines : 
+			<input type="checkbox" id="pleft" name="pleft" checked>
+			<label for="pleft">gauche</label>
+			<input type="checkbox" id="pmiddle" name="pmiddle">
+			<label for="pmiddle">milieu</label>
+			<input type="checkbox" id="pright" name="pright" checked>
+			<label for="pright">droite</label><br/>
+			<small>ZQSD : Changer la position de l'hélicoptère. AE : Tourner les turbines.</small>
+		</p>
 		<script data-main="main.4.js" src="lib/require.js"></script>
 	</body>
 </html>
