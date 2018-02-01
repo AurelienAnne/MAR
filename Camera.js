@@ -8,7 +8,7 @@ function Camera() {
             carGeometry.remove(camera);
             this.update(NAV, camera, vehicle);
 
-            if(hasChosenHelico) {
+            if(playerHasChosenHelico) {
                 playerCar.activeParticles(true, true, true);
             }
         }
@@ -22,7 +22,7 @@ function Camera() {
             camera.rotation.z = 0.0 * Math.PI/180.0 ;
             onboard = true;
 
-            if(hasChosenHelico) {
+            if(playerHasChosenHelico) {
                 // On active les particules que sur la turbine du milieu car on ne voit pas les turbines latérales sur la caméra embarquée
                 playerCar.activeParticles(false, true, false); 
             }

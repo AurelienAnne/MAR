@@ -31,12 +31,14 @@ var Loader;
 
 var trajetHelico;
 var posOnTrajet = 0;
-var helicoJournalistes;
+var vehiculeJournalistes;
 var journalistesSontDansHelico;
+var journalistsEnabled = true;
 
 var startRaceTime = undefined;
 var actualTour = null;
 var momentVar = null;
+var raceFinish = false;
 var playerHasChosenHelico = true;
 document.getElementById("audioMusic").volume = 0.3;
 document.getElementById("audioStarship").volume = 0.0;
@@ -48,6 +50,13 @@ var ghostAllowed; // Activer ou non par l'utilisateur depuis le menu
 var inputCurrentTurn = [];
 var currentGhostFrame = 0;
 var particlesEnabled = true;
+var nbLap = 0;
+var bestTour = null;
+var bestTurn = -1;
+var actualTour = null;
+var lastPlane = "1";
+var laps = [];
+var checkpoint15 = false;
 
 function init(){
 	//	rendering env
@@ -80,12 +89,12 @@ function start(config)
 	var currentlyPressedKeys = {};
 	
 	
-
+	journalistsEnabled = config.journalists;
 	particlesEnabled = config.particles;
 	ghostAllowed = config.ghost;
 	if(ghostAllowed) {
 		AIcar = new Vehicule(-220,-50,0,0,"AIcar", Loader, renderingEnvironment);
-	}
+	}	
 
 	if(config.music) {
 		document.getElementById("audioMusic").play();
@@ -175,32 +184,33 @@ function start(config)
 	/**
 	 * Bezier Curve
 	 */
+	if(journalistsEnabled) {
+		var curve = new THREE.CubicBezierCurve3(
+			new THREE.Vector3( -150, 0, 200 ),
+			new THREE.Vector3( -150, 200,200 ),
+			new THREE.Vector3( 150, 200, 200 ),
+			new THREE.Vector3( 150, 0, 200 )
+		);
 
-	var curve = new THREE.CubicBezierCurve3(
-		new THREE.Vector3( -150, 0, 200 ),
-		new THREE.Vector3( -150, 200,200 ),
-		new THREE.Vector3( 150, 200, 200 ),
-		new THREE.Vector3( 150, 0, 200 )
-	);
+		var curve2 = new THREE.CubicBezierCurve3(
+			new THREE.Vector3( 150, 0, 200 ),
+			new THREE.Vector3( 150, -200, 200 ),
+			new THREE.Vector3( -150, -200, 200 ),
+			new THREE.Vector3( -150, 0, 200 )
+		);
+		
+		
+		trajetHelico = new THREE.Geometry();
+		trajetHelico.vertices = curve.getPoints( 500 ).concat(curve2.getPoints( 500 ));
 
-	var curve2 = new THREE.CubicBezierCurve3(
-		new THREE.Vector3( 150, 0, 200 ),
-		new THREE.Vector3( 150, -200, 200 ),
-		new THREE.Vector3( -150, -200, 200 ),
-		new THREE.Vector3( -150, 0, 200 )
-	);
-	
-	
-	trajetHelico = new THREE.Geometry();
-	trajetHelico.vertices = curve.getPoints( 500 ).concat(curve2.getPoints( 500 ));
-
-	if(playerHasChosenHelico){
-		helicoJournalistes = new Vehicule(-150,0,200,0,"helico", Loader, renderingEnvironment);
-		journalistesSontDansHelico = false;
-	}else{
-		helicoJournalistes = new Helico(-150,0,200,0,"helico", Loader, renderingEnvironment);
-		journalistesSontDansHelico = true;
-	}
+		if(playerHasChosenHelico){
+			vehiculeJournalistes = new Vehicule(-150,0,200,0,"helico", Loader, renderingEnvironment);
+			journalistesSontDansHelico = false;
+		}else{
+			vehiculeJournalistes = new Helico(-150,0,200,0,"helico", Loader, renderingEnvironment);
+			journalistesSontDansHelico = true;
+		}
+	}	
 
 	//	callback functions
 	//	---------------------------------------------------------------------------
@@ -220,81 +230,84 @@ function start(config)
 			renderingEnvironment.scene.traverse(function(o){
 				console.log('object:'+o.name+'>'+o.id+'::'+o.type);
 			});
-		}				
-		if (currentlyPressedKeys[68]) // (D) Right
-		{
-			playerCar.vehicle.turnRight(1000) ;
-			//saveGhostPosition(NAV, "R");
-			inputCurrentTurn.push({
-				"x": NAV.x,
-				"y": NAV.y,
-				"z": NAV.z,
-				"key": "R"
-			});
+		}	
+		
+		if (!raceFinish) {
+			if (currentlyPressedKeys[68]) // (D) Right
+			{
+				playerCar.vehicle.turnRight(1000) ;
+				//saveGhostPosition(NAV, "R");
+				inputCurrentTurn.push({
+					"x": NAV.x,
+					"y": NAV.y,
+					"z": NAV.z,
+					"key": "R"
+				});
 
-			if(playerHasChosenHelico){
-				if(playerCar.helicoTurbineD.rotation.z > -30*Math.PI/180){
-					playerCar.helicoTurbineD.rotation.z += -2*Math.PI/180;
-					playerCar.helicoTurbineG.rotation.z += -2*Math.PI/180;
+				if(playerHasChosenHelico){
+					if(playerCar.helicoTurbineD.rotation.z > -30*Math.PI/180){
+						playerCar.helicoTurbineD.rotation.z += -2*Math.PI/180;
+						playerCar.helicoTurbineG.rotation.z += -2*Math.PI/180;
+					}
 				}
 			}
-		}
-		if (currentlyPressedKeys[81]) // (Q) Left 
-		{		
-			playerCar.vehicle.turnLeft(1000) ;
-			//saveGhostPosition(NAV, "L");
-			inputCurrentTurn.push({
-				"x": NAV.x,
-				"y": NAV.y,
-				"z": NAV.z,
-				"key": "L"
-			});
+			if (currentlyPressedKeys[81]) // (Q) Left 
+			{		
+				playerCar.vehicle.turnLeft(1000) ;
+				//saveGhostPosition(NAV, "L");
+				inputCurrentTurn.push({
+					"x": NAV.x,
+					"y": NAV.y,
+					"z": NAV.z,
+					"key": "L"
+				});
 
-			if(playerHasChosenHelico){
-				if(playerCar.helicoTurbineD.rotation.z < 30*Math.PI/180){
-					playerCar.helicoTurbineD.rotation.z += 2*Math.PI/180;
-					playerCar.helicoTurbineG.rotation.z += 2*Math.PI/180;
+				if(playerHasChosenHelico){
+					if(playerCar.helicoTurbineD.rotation.z < 30*Math.PI/180){
+						playerCar.helicoTurbineD.rotation.z += 2*Math.PI/180;
+						playerCar.helicoTurbineG.rotation.z += 2*Math.PI/180;
+					}
 				}
 			}
-		}
-		if (currentlyPressedKeys[90]) // (Z) Up
-		{
-			playerCar.vehicle.goFront(1200, 1200);	
-			inputCurrentTurn.push({
-				"x": NAV.x,
-				"y": NAV.y,
-				"z": NAV.z,
-				"key": "U"
-			});
-			
-			//saveGhostPosition(NAV, "U");
-			if(startRaceTime == undefined) {
-				startRaceTime = moment();
-			}
+			if (currentlyPressedKeys[90]) // (Z) Up
+			{
+				playerCar.vehicle.goFront(1200, 1200);	
+				inputCurrentTurn.push({
+					"x": NAV.x,
+					"y": NAV.y,
+					"z": NAV.z,
+					"key": "U"
+				});
+				
+				//saveGhostPosition(NAV, "U");
+				if(startRaceTime == undefined) {
+					startRaceTime = moment();
+				}
 
-			if(playerHasChosenHelico){
-				if(playerCar.helicoTurbineD.rotation.z > 0){
-					playerCar.helicoTurbineD.rotation.z += -1*Math.PI/180;
-					playerCar.helicoTurbineG.rotation.z += -1*Math.PI/180;
-				}else if(playerCar.helicoTurbineD.rotation.z < 0){
-					playerCar.helicoTurbineD.rotation.z += 1*Math.PI/180;
-					playerCar.helicoTurbineG.rotation.z += 1*Math.PI/180;
+				if(playerHasChosenHelico){
+					if(playerCar.helicoTurbineD.rotation.z > 0){
+						playerCar.helicoTurbineD.rotation.z += -1*Math.PI/180;
+						playerCar.helicoTurbineG.rotation.z += -1*Math.PI/180;
+					}else if(playerCar.helicoTurbineD.rotation.z < 0){
+						playerCar.helicoTurbineD.rotation.z += 1*Math.PI/180;
+						playerCar.helicoTurbineG.rotation.z += 1*Math.PI/180;
+					}
 				}
 			}
-		}
-		if (currentlyPressedKeys[83]) // (S) Down 
-		{
-			playerCar.vehicle.brake(100);
-			inputCurrentTurn.push({
-				"x": NAV.x,
-				"y": NAV.y,
-				"z": NAV.z,
-				"key": "D"
-			});
-			//saveGhostPosition(NAV, "D");
-		}
-		if(currentlyPressedKeys[72]) { // (H) Hack 
-			nextLap(NAV);
+			if (currentlyPressedKeys[83]) // (S) Down 
+			{
+				playerCar.vehicle.brake(100);
+				inputCurrentTurn.push({
+					"x": NAV.x,
+					"y": NAV.y,
+					"z": NAV.z,
+					"key": "D"
+				});
+				//saveGhostPosition(NAV, "D");
+			}
+			if(currentlyPressedKeys[72]) { // (H) Hack 
+				nextLap(NAV);
+			}
 		}
 	}
 
@@ -309,27 +322,27 @@ function start(config)
 		handleKeys();
 				
 		renderVehicule(playerCar);
-		editInfos(NAV, playerCar.vehicle);
 
 		/**
 		 * Helico sur la courbe de Bezier
 		 */
+		if(journalistsEnabled) {
+			var pos = trajetHelico.vertices[(posOnTrajet++)%1000];	
 
-		var pos = trajetHelico.vertices[(posOnTrajet++)%1000];	
+			vehiculeJournalistes.vehicle.position.set(pos.x, pos.y, pos.z) ;
+			// Updates the vehicle
+			vehiculeJournalistes.carPosition.position.set(pos.x, pos.y, pos.z) ;
+			vehiculeJournalistes.vehicle.position.x = pos.x ;
+			vehiculeJournalistes.vehicle.position.y = pos.y ;
+			vehiculeJournalistes.carFloorSlope.matrixAutoUpdate = false;
 
-		helicoJournalistes.vehicle.position.set(pos.x, pos.y, pos.z) ;
-		// Updates the vehicle
-		helicoJournalistes.carPosition.position.set(pos.x, pos.y, pos.z) ;
-		helicoJournalistes.vehicle.position.x = pos.x ;
-		helicoJournalistes.vehicle.position.y = pos.y ;
-		helicoJournalistes.carFloorSlope.matrixAutoUpdate = false;
+			vehiculeJournalistes.carRotationZ.rotation.z -= 0.36*Math.PI/180;
 
-		helicoJournalistes.carRotationZ.rotation.z -= 0.36*Math.PI/180;
-
-		if(journalistesSontDansHelico){
-			helicoJournalistes.helicoAxeC.rotation.y += 15*Math.PI/180;
-			helicoJournalistes.helicoAxeG.rotation.y += 15*Math.PI/180;
-			helicoJournalistes.helicoAxeD.rotation.y += 15*Math.PI/180;
+			if(journalistesSontDansHelico){
+				vehiculeJournalistes.helicoAxeC.rotation.y += 15*Math.PI/180;
+				vehiculeJournalistes.helicoAxeG.rotation.y += 15*Math.PI/180;
+				vehiculeJournalistes.helicoAxeD.rotation.y += 15*Math.PI/180;
+			}
 		}
 
 		// Rendering
@@ -369,6 +382,7 @@ function start(config)
 		}
 
 		if (nbLap >= 5) {
+			raceFinish = true;
 			ath.showEnd();
 		} else {
 			// Camera
@@ -388,14 +402,21 @@ function start(config)
 			momentVar = moment();
 			if (lastPlane == "0" && NAV.active == "1" && checkpoint15) {
 				laps.push(momentVar);
-				if(!bestTour)
+				if(!bestTour) {
 					bestTour = moment(momentVar.diff(startRaceTime)).format("m:ss.SSS")
+					bestTurn = nbLap;
+					ghosts.best = inputCurrentTurn;
+				}
 				else{
 					actualTour = moment(momentVar.diff(laps[laps.length-2])).format("m:ss.SSS");
-					if(actualTour < bestTour)
+					if(actualTour < bestTour) {
 						bestTour = actualTour; 
+						bestTurn = nbLap;
+						ghosts.best = inputCurrentTurn;
+					}
 				}
 				nbLap++;
+				inputCurrentTurn = [];
 				checkpoint15 = false;
 				ghostEnabled = true;
 			}
@@ -410,7 +431,12 @@ function start(config)
 		
 			// Sound
 			const vehiculeVolume = playerCar.vehicle.getVehiculeSpeed() / 100;
-			document.getElementById("audioStarship").volume = (vehiculeVolume > 1) ? 1.0 : vehiculeVolume;			
+			if(playerHasChosenHelico) {
+				document.getElementById("audioHelico").volume = (vehiculeVolume > 1) ? 1.0 : vehiculeVolume;
+			}
+			else {
+				document.getElementById("audioStarship").volume = (vehiculeVolume > 1) ? 1.0 : vehiculeVolume;
+			}			
 	
 			// Rendering
 			if(playerHasChosenHelico && particlesEnabled){				
@@ -483,85 +509,6 @@ function renderAIvehicule(NAV) {
 	}	
 }
 
-// Gestion des tours
-var nbLap = 0;
-var bestTurn = 0;
-var bestTour = null;
-var actualTour = null;
-var momentVar = null;
-var lastPlane = "1";
-var laps = [];
-var checkpoint15 = false;
-
-function editInfos(NAV, vehicle) {
-	document.getElementById('infos').style = 'position: absolute; margin-top: 10px;margin-left: 10px; font-family: Arial; color: white;background-color:rgba(128, 128, 128, .7);padding:4px;';
-	if(NAV.active == "15") {
-		checkpoint15 = true;
-	}
-	if (lastPlane == "0" && NAV.active == "1" && checkpoint15) {
-		momentVar = moment();
-		laps.push(momentVar);
-		if(!bestTour){
-			bestTour = moment(momentVar.diff(startRaceTime)).format("m:ss.SSS");
-			bestTurn = nbLap;
-			ghosts.best = inputCurrentTurn;
-		}
-		else{
-			actualTour = moment(momentVar.diff(laps[laps.length-2])).format("m:ss.SSS");
-			if(actualTour < bestTour){
-				bestTour = actualTour;				
-				bestTurn = nbLap;
-				ghosts.best = inputCurrentTurn;
-			}
-				
-		}
-		nbLap++;
-		inputCurrentTurn = [];
-		checkpoint15 = false;
-		ghostEnabled = true;
-	}
-
-	document.getElementById("infos").innerHTML = "Vitesse : " + getVehiculeSpeed(vehicle) + "<br>"
-		+ "Tour : " + (nbLap+1) + "<br>" 
-		+ "Temps total : " + moment(moment().diff(startRaceTime)).format("m:ss.SSS") + "<br>"
-		+ "Meilleur temps : " + ((!bestTour)?"":bestTour) + " au tour n°"+ (bestTurn+1)+"<br>"
-		+ showLaps() 
-		+ "<label for=\"camera\">Changer camera</label><input type='text' enable=false value='P' size=2>";
-
-	//saveGhostPosition(NAV);	
-	if(ghostAllowed) renderAIvehicule(NAV);
-	
-
-	const vehiculeVolume = getVehiculeSpeed(vehicle) / 100;
-	document.getElementById("audioStarship").volume = (vehiculeVolume > 1) ? 1.0 : vehiculeVolume;
-	document.getElementById("audioHelico").volume = (vehiculeVolume > 1) ? 1.0 : vehiculeVolume;
-
-	lastPlane = NAV.active;
-	
-
-	
-	//console.log(NAV.planeSet[0].isIn(AIcar.vehicle.position.x, AIcar.vehicle.position.y));
-}
-
-function showLaps() {
-	var html = "";
-	for(let i = 0; i < laps.length; i++) {
-		var ref;
-		if (i == 0) {
-			ref = startRaceTime;
-		}
-		else {
-			ref = laps[i-1];
-		}
-		html += "> Tour " + (i+1) + " : " + moment(laps[i].diff(ref)).format("m:ss.SSS") + "<br>";
-	}
-	return html;
-}
-
-function getVehiculeSpeed(vehicle) {
-	return Math.max(Math.abs(vehicle.speed.x), Math.abs(vehicle.speed.y), Math.abs(vehicle.speed.z)).toFixed(0);	
-}
-
 // Cheat mode
 function nextLap(NAV) {
 	checkpoint15 = true;
@@ -570,14 +517,3 @@ function nextLap(NAV) {
 	NAV.y = -89.90764169051636
 	NAV.z = 3.30254723017212;
 }
-
-// Ghost
-//function saveGhostPosition(NAV, key) {
-	/*ghosts.push({
-		"x": NAV.x,
-		"y": NAV.y,
-		"z": NAV.z,
-		"key": key
-	});
-}*/
-

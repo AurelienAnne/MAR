@@ -30,23 +30,24 @@ function ATH(Loader, renderingEnvironment) {
             document.getElementById('mainMenu').style = cssMiddle(420, 420) + cssAthStyle() + 'visible: true;';    
             document.getElementById("mainMenu").innerHTML = '<div style="text-align:center;">'
                 + '<h1 style="font-size: 36px;text-align:center;">MARace</h1>'
-                + '<p style="font-size: 24px;"><b>Jouer avec</b>'
+                + '<p style="font-size: 24px; line-height: 10px;"><b>Jouer avec</b></p>'
                 + '<p><input type="radio" id="vehicle_helico" name="vehicle" checked>'
                 + '<label for="vehicle_helico">L\'hélico</label>'
                 + '<input type="radio" id="vehicle_car" name="vehicle">'
                 + '<label for="vehicle_car">Le vaisseau</label></p>'
                 + '<p><input type="checkbox" id="ghostEnabled" name="ghostEnabled" checked>'
-                + '<label for="ghostEnabled">Activer le fantôme</label><br>'
-                + '<input type="checkbox" id="musicEnabled" name="musicEnabled" checked>'
-                + '<label for="musicEnabled">Activer la musique</label><br>'
-                + '<input type="checkbox" id="particlesEnabled" name="particlesEnabled" checked>'
-                + '<label for="particlesEnabled">Activer les particules</label></p>'
+                + '<label for="ghostEnabled">Activer le fantôme</label><br>'                
+                + '<input type="checkbox" id="particlesEnabled" name="particlesEnabled">'
+                + '<label for="particlesEnabled">Activer les particules</label><br>'
+                + '<input type="checkbox" id="journalistEnabled" name="journalistEnabled">'
+                + '<label for="journalistEnabled">Activer les journalistes (courbe de bezier)</label><br>'
+                + '<input type="checkbox" id="musicEnabled" name="musicEnabled"'
+                + '<label for="musicEnabled">Activer la musique</label></p>'
                 + '<p>Commandes :<br>'
-                + 'Avancer : Z<br>'
-                + 'Freiner : S<br>'
-                + 'Droite  : D<br>'
-                + 'Gauche  : Q<br>'
-                + 'Caméra  : P</p>'
+                + 'Avancer/Freiner : Z/S<br>'
+                + 'Gauche/Droite : Q/D<br>'
+                + 'Caméra : P<br>'
+                + 'Hack (faire un tour complet) : H</p>'
                 + '<button style="font-size: 20px;" onClick="ath.MainMenu.submit()">Jouer</button></div>';
         },     
         submit : function () { 
@@ -57,7 +58,8 @@ function ATH(Loader, renderingEnvironment) {
                 helico: document.getElementById("vehicle_helico").checked,
                 ghost: document.getElementById("ghostEnabled").checked,
                 music: document.getElementById("musicEnabled").checked,
-                particles: document.getElementById("particlesEnabled").checked
+                particles: document.getElementById("particlesEnabled").checked,
+                journalists: document.getElementById("journalistEnabled").checked
             });
         }
     }
@@ -77,7 +79,7 @@ function ATH(Loader, renderingEnvironment) {
             + "Tour : " + (nbLap+1) + "<br>" 
             + "Score : " + this.score + "<br>"
             + "Temps total : " + totalTime + "<br>"
-            + "Meilleur tour : " + ((!bestTour)?"":bestTour) + "<br>"
+            + "Meilleur tour : " + ((!bestTour)?"":bestTour) + ((bestTurn >= 0) ? " au tour n°"+ (bestTurn+1) : "") + "<br>"
             + this.showLaps() 
             //+ "<br>Debug:<br> Vehicule pos : " + NAV.x.toFixed(1) + ", " + NAV.y.toFixed(1) + ", " + NAV.z.toFixed(1) + "<br>";
     }
