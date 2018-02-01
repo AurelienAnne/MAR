@@ -32,11 +32,12 @@ var Loader;
 var trajetHelico;
 var posOnTrajet = 0;
 var helicoJournalistes;
+var journalistesSontDansHelico;
 
 var startRaceTime = undefined;
 var actualTour = null;
 var momentVar = null;
-var hasChosenHelico = true;
+var playerHasChosenHelico = true;
 document.getElementById("audioMusic").volume = 0.3;
 document.getElementById("audioStarship").volume = 0.0;
 document.getElementById("audioHelico").volume = 0.0;
@@ -100,8 +101,8 @@ function start(config)
 	var crates = new Crates(renderingEnvironment.scene);
 	var camera = new Camera();
 
-	hasChosenHelico = config.helico;
-	if(hasChosenHelico){
+	playerHasChosenHelico = config.helico;
+	if(playerHasChosenHelico){
 		playerCar = new Helico(-220,0,0,0,"PlayerCar", Loader, renderingEnvironment);
 		// On active les particules que sur la turbine du milieu car on ne voit pas les turbines latérales sur la caméra embarquée
 		playerCar.activeParticles(false, true, false); 
@@ -114,7 +115,7 @@ function start(config)
 	var carGeometry = playerCar.carGeometry;
 	carGeometry.position.z= +0.25 ;
 	// attach the scene camera to car
-	renderingEnvironment.addToScene(playerCar.carPosition); 
+	//renderingEnvironment.addToScene(playerCar.carPosition); 
 	playerCar.carGeometry.add(renderingEnvironment.camera) ;
 	renderingEnvironment.camera.position.x = 0.0 ;
 	renderingEnvironment.camera.position.z = 10.0 ;
@@ -193,10 +194,12 @@ function start(config)
 	trajetHelico = new THREE.Geometry();
 	trajetHelico.vertices = curve.getPoints( 500 ).concat(curve2.getPoints( 500 ));
 
-	if(hasChosenHelico){
+	if(playerHasChosenHelico){
 		helicoJournalistes = new Vehicule(-150,0,200,0,"helico", Loader, renderingEnvironment);
+		journalistesSontDansHelico = false;
 	}else{
 		helicoJournalistes = new Helico(-150,0,200,0,"helico", Loader, renderingEnvironment);
+		journalistesSontDansHelico = true;
 	}
 
 	//	callback functions
@@ -229,7 +232,7 @@ function start(config)
 				"key": "R"
 			});
 
-			if(hasChosenHelico){
+			if(playerHasChosenHelico){
 				if(playerCar.helicoTurbineD.rotation.z > -30*Math.PI/180){
 					playerCar.helicoTurbineD.rotation.z += -2*Math.PI/180;
 					playerCar.helicoTurbineG.rotation.z += -2*Math.PI/180;
@@ -247,7 +250,7 @@ function start(config)
 				"key": "L"
 			});
 
-			if(hasChosenHelico){
+			if(playerHasChosenHelico){
 				if(playerCar.helicoTurbineD.rotation.z < 30*Math.PI/180){
 					playerCar.helicoTurbineD.rotation.z += 2*Math.PI/180;
 					playerCar.helicoTurbineG.rotation.z += 2*Math.PI/180;
@@ -269,7 +272,7 @@ function start(config)
 				startRaceTime = moment();
 			}
 
-			if(hasChosenHelico){
+			if(playerHasChosenHelico){
 				if(playerCar.helicoTurbineD.rotation.z > 0){
 					playerCar.helicoTurbineD.rotation.z += -1*Math.PI/180;
 					playerCar.helicoTurbineG.rotation.z += -1*Math.PI/180;
@@ -323,6 +326,12 @@ function start(config)
 
 		helicoJournalistes.carRotationZ.rotation.z -= 0.36*Math.PI/180;
 
+		if(journalistesSontDansHelico){
+			helicoJournalistes.helicoAxeC.rotation.y += 15*Math.PI/180;
+			helicoJournalistes.helicoAxeG.rotation.y += 15*Math.PI/180;
+			helicoJournalistes.helicoAxeD.rotation.y += 15*Math.PI/180;
+		}
+
 		// Rendering
 		function renderVehicule(v){
 
@@ -349,7 +358,7 @@ function start(config)
 			v.carFloorSlope.matrix.copy(NAV.localMatrix(v.CARx, v.CARy));
 			
 			// Helico pales
-			if(hasChosenHelico){
+			if(playerHasChosenHelico){
 				v.helicoAxeC.rotation.y += (v.vehicle.getVehiculeSpeed()/5)*Math.PI/180;
 				v.helicoAxeG.rotation.y += (v.vehicle.getVehiculeSpeed()/5)*Math.PI/180;
 				v.helicoAxeD.rotation.y += (v.vehicle.getVehiculeSpeed()/5)*Math.PI/180;
@@ -397,14 +406,14 @@ function start(config)
 			ath.update(NAV, playerCar.vehicle, nbLap);
 		
 			//saveGhostPosition(NAV);	
-			renderAIvehicule();
+			if(ghostAllowed) renderAIvehicule();
 		
 			// Sound
 			const vehiculeVolume = playerCar.vehicle.getVehiculeSpeed() / 100;
 			document.getElementById("audioStarship").volume = (vehiculeVolume > 1) ? 1.0 : vehiculeVolume;			
 	
 			// Rendering
-			if(hasChosenHelico && particlesEnabled){				
+			if(playerHasChosenHelico && particlesEnabled){				
 				playerCar.renderParticles();
 			}
 			renderingEnvironment.renderer.render(renderingEnvironment.scene, renderingEnvironment.camera); 
@@ -520,7 +529,7 @@ function editInfos(NAV, vehicle) {
 		+ "<label for=\"camera\">Changer camera</label><input type='text' enable=false value='P' size=2>";
 
 	//saveGhostPosition(NAV);	
-	renderAIvehicule(NAV);
+	if(ghostAllowed) renderAIvehicule(NAV);
 	
 
 	const vehiculeVolume = getVehiculeSpeed(vehicle) / 100;
